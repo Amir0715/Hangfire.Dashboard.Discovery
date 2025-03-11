@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.Dashboard.Blazor.Example", "Hangfire.Dashboard.Blazor.Example\Hangfire.Dashboard.Blazor.Example.csproj", "{35309EAF-FF52-492A-9651-EE990A5C9139}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.Dashboard.Blazor", "Hangfire.Dashboard.Blazor\Hangfire.Dashboard.Blazor.csproj", "{6A2C9A65-A42D-4508-AFED-F81FBCF5CF24}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.Dashboard.Blazor.Core", "Hangfire.Dashboard.Blazor.Core\Hangfire.Dashboard.Blazor.Core.csproj", "{6CEBE2AE-177D-445E-A23F-0D9A8FC22761}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.Dashboard.Blazor.Core.Tests", "Hangfire.Dashboard.Blazor.Core.Tests\Hangfire.Dashboard.Blazor.Core.Tests.csproj", "{334D43EC-56AC-408D-9084-5528D481B7BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.Dashboard.Blazor.Postgresql", "Hangfire.Dashboard.Blazor.Postgresql\Hangfire.Dashboard.Blazor.Postgresql.csproj", "{4011B801-9ABE-4AC2-91FC-959EA209C78A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{35309EAF-FF52-492A-9651-EE990A5C9139}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35309EAF-FF52-492A-9651-EE990A5C9139}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35309EAF-FF52-492A-9651-EE990A5C9139}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35309EAF-FF52-492A-9651-EE990A5C9139}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A2C9A65-A42D-4508-AFED-F81FBCF5CF24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A2C9A65-A42D-4508-AFED-F81FBCF5CF24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A2C9A65-A42D-4508-AFED-F81FBCF5CF24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A2C9A65-A42D-4508-AFED-F81FBCF5CF24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CEBE2AE-177D-445E-A23F-0D9A8FC22761}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CEBE2AE-177D-445E-A23F-0D9A8FC22761}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CEBE2AE-177D-445E-A23F-0D9A8FC22761}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CEBE2AE-177D-445E-A23F-0D9A8FC22761}.Release|Any CPU.Build.0 = Release|Any CPU
+		{334D43EC-56AC-408D-9084-5528D481B7BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{334D43EC-56AC-408D-9084-5528D481B7BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{334D43EC-56AC-408D-9084-5528D481B7BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{334D43EC-56AC-408D-9084-5528D481B7BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4011B801-9ABE-4AC2-91FC-959EA209C78A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4011B801-9ABE-4AC2-91FC-959EA209C78A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4011B801-9ABE-4AC2-91FC-959EA209C78A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4011B801-9ABE-4AC2-91FC-959EA209C78A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
