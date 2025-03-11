@@ -1,4 +1,4 @@
-using Hangfire.Dashboard.Blazor.Core.Helpers;
+using Hangfire.Dashboard.Blazor.Core.Tests.Helpers;
 using Hangfire.Dashboard.Blazor.Core.Tokenization;
 using Hangfire.Dashboard.Blazor.Core.Tokenization.Tokens;
 

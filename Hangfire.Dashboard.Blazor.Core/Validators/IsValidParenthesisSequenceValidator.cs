@@ -1,10 +1,13 @@
 using System.Collections.Generic;
-using System.Linq;
 using FluentValidation;
 using FluentValidation.Validators;
 
 namespace Hangfire.Dashboard.Blazor.Core.Validators;
 
+/// <summary>
+/// Валидатор для проверки скобочных выражений. Игнорирует невалидные скобочные выражения внутри ". 
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public class IsValidParenthesisSequenceValidator<T> : PropertyValidator<T, string>
 {
     public override string Name => "IsValidParenthesisSequenceValidator";
@@ -14,47 +17,42 @@ public class IsValidParenthesisSequenceValidator<T> : PropertyValidator<T, strin
         return IsValidParenthesisSequence(value);
     }
     
+    /// <summary>
+    /// Валидирует строку на правильную скобочную последовательность.  
+    /// </summary>
+    /// <remarks>Игнорирует невалидные скобочные выражения внутри <c>"</c>.</remarks>
     public static bool IsValidParenthesisSequence(string query)
     {
         if (string.IsNullOrWhiteSpace(query)) 
             return false;
             
         var stack = new Stack<char>();
+        var insideQuotes = false;
+        
         foreach (var c in query)
         {
-            if (c is '(' or '"')
+            if (c == '"')
             {
-                stack.Push(c);
+                insideQuotes = !insideQuotes;
                 continue;
             }
-
-            if (c is ')')
+            
+            if (insideQuotes)
+                continue;
+            
+            if (c == '(')
             {
-                if (!stack.Any())
-                {
-                    return false;
-                }
-                
-                var lastChar = stack.Pop();
-                if (lastChar != '(')
-                {
-                    return false;
-                }
-            } else if (c is '"')
+                stack.Push(c);
+            }
+            else if (c == ')')
             {
-                if (!stack.Any())
-                {
-                    return false;
-                }
-                
-                var lastChar = stack.Pop();
-                if (lastChar != '"')
+                if (stack.Count == 0 || stack.Pop() != '(')
                 {
                     return false;
                 }
             }
         }
-
-        return !stack.Any();
+        
+        return stack.Count == 0 && !insideQuotes;
     }
 }

@@ -1,8 +1,7 @@
 using System.Collections;
-using System.Collections.Generic;
 using Hangfire.Dashboard.Blazor.Core.Tokenization.Tokens;
 
-namespace Hangfire.Dashboard.Blazor.Core.Helpers;
+namespace Hangfire.Dashboard.Blazor.Core.Tests.Helpers;
 
 public class TokenListBuilder : IEnumerable<Token>
 {

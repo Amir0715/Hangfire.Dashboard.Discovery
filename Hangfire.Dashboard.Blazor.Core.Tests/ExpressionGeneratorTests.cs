@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 using System.Text.Json;
-using Hangfire.Dashboard.Blazor.Core.Helpers;
+using Hangfire.Dashboard.Blazor.Core.Tests.Helpers;
 using Xunit.Abstractions;
 
 namespace Hangfire.Dashboard.Blazor.Core.Tests;
