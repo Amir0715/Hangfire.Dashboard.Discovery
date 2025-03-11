@@ -8,7 +8,7 @@ public class Job
 {
     public long Id { get; set; }
 
-    public string? State { get; set; }
+    public string State { get; set; }
 
     public Invocation Invocation { get; set; } = null!;
 

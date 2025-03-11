@@ -2,6 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Hangfire.Dashboard.Blazor;
 
-public class DependencyExtensions
+public static class DependencyInjection
 {
 }

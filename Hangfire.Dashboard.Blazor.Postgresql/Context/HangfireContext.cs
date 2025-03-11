@@ -6,10 +6,6 @@ namespace Hangfire.Dashboard.Blazor.Postgresql.Context;
 
 public partial class HangfireContext : DbContext
 {
-    public HangfireContext()
-    {
-    }
-
     public HangfireContext(DbContextOptions<HangfireContext> options)
         : base(options)
     {
@@ -22,19 +18,14 @@ public partial class HangfireContext : DbContext
     public virtual DbSet<Jobqueue> Jobqueues { get; set; }
 
     public virtual DbSet<State> States { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https: //go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql(
-            "Host=localhost;Port=5432;Database=sminex_comfort;Username=postgres;Password=postgres;Include Error Detail=true");
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Job>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("job_pkey");
 
-            entity.ToTable("job", "hangfire-etl-data");
+            entity.ToTable("job", "hangfire");
 
             entity.HasIndex(e => e.Expireat, "ix_hangfire_job_expireat");
 
@@ -53,15 +44,14 @@ public partial class HangfireContext : DbContext
                 .HasColumnName("invocationdata");
 
             entity.Property(e => e.State)
-                .HasColumnName("statename")
-                .HasComputedColumnSql(@"""""");
+                .HasColumnName("statename");
         });
 
         modelBuilder.Entity<Jobparameter>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("jobparameter_pkey");
 
-            entity.ToTable("jobparameter", "hangfire-etl-data");
+            entity.ToTable("jobparameter", "hangfire");
 
             entity.HasIndex(e => new { e.Jobid, e.Name }, "ix_hangfire_jobparameter_jobidandname");
 
@@ -76,7 +66,7 @@ public partial class HangfireContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("jobqueue_pkey");
 
-            entity.ToTable("jobqueue", "hangfire-etl-data");
+            entity.ToTable("jobqueue", "hangfire");
 
             entity.HasIndex(e => new { e.Fetchedat, e.Queue, e.Jobid }, "ix_hangfire_jobqueue_fetchedat_queue_jobid")
                 .HasNullSortOrder(new[] { NullSortOrder.NullsFirst, NullSortOrder.NullsLast, NullSortOrder.NullsLast });
@@ -98,7 +88,7 @@ public partial class HangfireContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("state_pkey");
 
-            entity.ToTable("state", "hangfire-etl-data");
+            entity.ToTable("state", "hangfire");
 
             entity.HasIndex(e => e.Jobid, "ix_hangfire_state_jobid");
 

@@ -5,7 +5,7 @@ namespace Hangfire.Dashboard.Blazor.Core;
 
 public class JobContext
 {
-    public string Id { get; set; }
+    public long Id { get; set; }
     public string State { get; set; }
     public string Queue { get; set; }
     
