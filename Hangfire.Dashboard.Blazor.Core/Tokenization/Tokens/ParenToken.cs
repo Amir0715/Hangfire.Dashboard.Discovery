@@ -31,4 +31,13 @@ public class ParenToken : Token, IEquatable<ParenToken>
     {
         return (int)Paren;
     }
+
+    public override string ToString()
+    {
+        return Paren switch
+        {
+            ParenType.Close => ")",
+            ParenType.Open => "(",
+        };
+    }
 }

@@ -13,7 +13,7 @@ public class QueryParser
     public static Expression<Func<JobContext, bool>> Parse(string query)
     {
         // TODO: throw exception
-        new QueryValidator().ValidateAndThrow(new QueryDto() { Query = query });
+        new QueryDtoValidator().ValidateAndThrow(new QueryDto() { Query = query });
         
         var tokens = Tokenizer.Tokenize(query).ToList();
 

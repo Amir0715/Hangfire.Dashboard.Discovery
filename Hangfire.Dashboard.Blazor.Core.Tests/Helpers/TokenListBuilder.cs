@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Text;
 using Hangfire.Dashboard.Blazor.Core.Tokenization.Tokens;
 
 namespace Hangfire.Dashboard.Blazor.Core.Tests.Helpers;
@@ -93,5 +94,16 @@ public class TokenListBuilder : IEnumerable<Token>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
+    }
+
+    public override string ToString()
+    {
+        var sb = new StringBuilder(_tokens.Count);
+        foreach (var token in _tokens)
+        {
+            sb.Append($"{token.ToString()} ");
+        }
+
+        return sb.ToString();
     }
 }

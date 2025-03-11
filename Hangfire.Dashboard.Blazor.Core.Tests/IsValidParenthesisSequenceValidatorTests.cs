@@ -1,4 +1,6 @@
 using FluentValidation;
+using FluentValidation.Validators;
+using Hangfire.Dashboard.Blazor.Core.Helpers;
 using Hangfire.Dashboard.Blazor.Core.Validators;
 
 namespace Hangfire.Dashboard.Blazor.Core.Tests;
@@ -25,10 +27,7 @@ public class IsValidParenthesisSequenceValidatorTests
     [MemberData(nameof(TestData))]
     public void ValidParenthesisSequence_Should_Success(string query, bool expectedIsValid)
     {
-        var validationContext = new ValidationContext<string>(query);
-        var validator = new IsValidParenthesisSequenceValidator<string>();
-
-        var actualIsValid = validator.IsValid(validationContext, query);
+        var actualIsValid = QueryValidator.IsValidParenthesisSequence(query);
 
         Assert.Equal(expectedIsValid, actualIsValid);
     }

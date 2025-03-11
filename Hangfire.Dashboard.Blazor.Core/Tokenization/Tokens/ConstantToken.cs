@@ -32,4 +32,9 @@ public class ConstantToken : Token, IEquatable<ConstantToken>
     {
         return Value.GetHashCode();
     }
+
+    public override string ToString()
+    {
+        return $"\"{Value}\"";
+    }
 }

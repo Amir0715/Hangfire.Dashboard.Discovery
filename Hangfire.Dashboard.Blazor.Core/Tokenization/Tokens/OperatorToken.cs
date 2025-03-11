@@ -31,4 +31,21 @@ public class OperatorToken : Token, IEquatable<OperatorToken>
     {
         return (int)Operator;
     }
+
+    public override string ToString()
+    {
+        return Operator switch
+        {
+            OperatorType.And => "&&",
+            OperatorType.Or => "||",
+            OperatorType.Equal => "==",
+            OperatorType.NotEqual => "!=",
+            OperatorType.GreaterThan => ">",
+            OperatorType.GreaterThanOrEqual => ">=",
+            OperatorType.LessThan => "<",
+            OperatorType.LessThanOrEqual => "<=",
+            OperatorType.Like => "~=",
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
 }

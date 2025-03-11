@@ -36,4 +36,9 @@ public class FieldAccessToken : Token, IEquatable<FieldAccessToken>
     {
         return FieldPath.GetHashCode();
     }
+
+    public override string ToString()
+    {
+        return FieldPath;
+    }
 }
