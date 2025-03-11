@@ -1,5 +1,3 @@
-using Hangfire.Dashboard.Blazor.Core.Models;
-
 namespace Hangfire.Dashboard.Blazor.Core.Tests;
 
 public class QueryParserTests

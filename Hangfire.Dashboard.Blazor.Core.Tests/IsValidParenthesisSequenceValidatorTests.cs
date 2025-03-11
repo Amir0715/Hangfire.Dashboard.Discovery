@@ -1,7 +1,4 @@
-using FluentValidation;
-using FluentValidation.Validators;
 using Hangfire.Dashboard.Blazor.Core.Helpers;
-using Hangfire.Dashboard.Blazor.Core.Validators;
 
 namespace Hangfire.Dashboard.Blazor.Core.Tests;
 
