@@ -3,16 +3,18 @@
     <PropertyGroup>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <LangVersion>default</LangVersion>
     </PropertyGroup>
-
-
+    
     <ItemGroup>
         <SupportedPlatform Include="browser"/>
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Bit.BlazorUI" Version="9.5.1" />
+        <PackageReference Include="Bit.BlazorUI.Extras" Version="9.5.1" />
+        <PackageReference Include="Bit.BlazorUI.Icons" Version="9.5.1" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.13" />
     </ItemGroup>
 
@@ -20,10 +22,12 @@
       <ProjectReference Include="..\Hangfire.Dashboard.Blazor.Core\Hangfire.Dashboard.Blazor.Core.csproj" />
       <ProjectReference Include="..\Hangfire.Dashboard.Blazor.Postgresql\Hangfire.Dashboard.Blazor.Postgresql.csproj" />
     </ItemGroup>
-
+    
     <ItemGroup>
-      <Folder Include="Components\" />
-      <Folder Include="wwwroot\" />
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
-
+    
+    <ItemGroup>
+      <Folder Include="wwwroot\lib\" />
+    </ItemGroup>
 </Project>

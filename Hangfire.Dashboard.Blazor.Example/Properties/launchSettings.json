@@ -10,6 +10,17 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "watch": {
+      "commandName": "Executable",
+      "workingDirectory": "$(ProjectDir)",
+      "executablePath": "dotnet.exe",
+      "commandLineArgs": "watch run --configuration Debug --launch-profile http",
+      "environmentVariables": {
+        "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Serilog__WriteTo__Graylog": "Console"
+      }
     }
   }
 }

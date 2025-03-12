@@ -1,4 +1,5 @@
 using Hangfire;
+using Hangfire.Dashboard.Blazor;
 using Hangfire.Dashboard.Blazor.Core;
 using Hangfire.Dashboard.Blazor.Core.Tokenization;
 using Hangfire.Dashboard.Blazor.Postgresql;
@@ -25,66 +26,11 @@ builder.Services.AddHangfire(c => c
 
 builder.Services.AddHangfireServer();
 
-builder.Services.AddHangfireDbContext(builder.Configuration);
+builder.Services.AddHangfireBlazorDashboard(builder.Configuration);
 
 var app = builder.Build();
-
-app.MapGet("/test", async ([FromServices] HangfireContext hangfireContext) =>
-{
-    var query = """
-                Method == "ErrorMethod" || Method == "SuccessMethod" || State == "Enqueued"
-                """;
-    var tokens = Tokenizer.Tokenize(query);
-    var expression = new ExpressionGenerator().GenerateExpression(tokens);
-    var jobs = await hangfireContext.Jobs
-        .AsNoTracking()
-        .Select(x => new JobContext()
-        {
-            Id = x.Id,
-            Type = x.Invocation.Type,
-            Method = x.Invocation.Method,
-            State = x.State,
-            Arguments = x.Arguments,
-            CreatedAt = x.Createdat,
-            ExpireAt = x.Expireat
-        })
-        .Where(expression)
-        .ToListAsync();
-
-    return jobs;
-});
-app.MapGet("/error/{q?}", (
-    string? q,
-    [FromQuery] int? d,
-    [FromQuery] int? c,
-    [FromServices] IBackgroundJobClient backgroundJobClient
-) =>
-{
-    for (int i = 0; i < c.GetValueOrDefault(1); i++)
-    {
-        if (string.IsNullOrWhiteSpace(q))
-            backgroundJobClient.Enqueue<JobClass>(j => j.ErrorMethod(d));
-        else
-            backgroundJobClient.Enqueue<JobClass>(q, j => j.ErrorMethod(d));
-    }
-});
-
-app.MapGet("/success/{q?}", (
-    string? q,
-    [FromQuery] int? d,
-    [FromQuery] int? c,
-    [FromServices] IBackgroundJobClient backgroundJobClient
-) =>
-{
-    for (int i = 0; i < c.GetValueOrDefault(1); i++)
-    {
-        if (string.IsNullOrWhiteSpace(q))
-            backgroundJobClient.Enqueue<JobClass>(j => j.SuccessMethod(d));
-        else
-            backgroundJobClient.Enqueue<JobClass>(q, j => j.SuccessMethod(d));
-    }
-});
-
+app.UseStaticFiles();
+app.MapHangfireBlazorDashboard();
 app.MapHangfireDashboard(options: new DashboardOptions { Authorization = [] });
 
 app.Run();

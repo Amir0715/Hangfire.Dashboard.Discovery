@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="Content-Language" content="ru">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Hangfire / Discovery</title>
+    <base href="/"/>
+    <link rel="stylesheet" href="_content/Hangfire.Dashboard.Blazor/lib/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="_content/Hangfire.Dashboard.Blazor/app.css"/>
+    <link rel="stylesheet" href="_content/Hangfire.Dashboard.Blazor/Hangfire.Dashboard.Blazor.bundle.csp.css"/>
+    <link rel="stylesheet" href="_content/Bit.BlazorUI/styles/bit.blazorui.css"/>
+    <link rel="stylesheet" href="_content/Bit.BlazorUI.Extras/styles/bit.blazorui.extras.css"/>
+    <link rel="stylesheet" href="_content/Bit.BlazorUI.Icons/styles/bit.blazorui.icons.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wdth,wght@0,75..100,100..900;1,75..100,100..900&display=swap" rel="stylesheet">
+    
+    <link rel="icon" type="image/png" href="/favicon.ico"/>
+    
+    <HeadOutlet @rendermode="InteractiveServer"/>
+</head>
+
+<body>
+<Routes @rendermode="InteractiveServer"/>
+<script src="_framework/blazor.web.js"></script>
+<script src="_content/Bit.BlazorUI/scripts/bit.blazorui.js"></script>
+<script src="_content/Bit.BlazorUI.Extras/scripts/bit.blazorui.extras.js"></script>
+</body>
+
+</html>

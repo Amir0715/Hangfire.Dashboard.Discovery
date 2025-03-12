@@ -1,0 +1,39 @@
+@inherits LayoutComponentBase
+
+<style>
+    .header {
+        padding: 0.5rem;
+        background: #2d333b;
+    }
+
+    .header a {
+        color: rgba(255, 255, 255, 0.6);;
+    }
+    .header a:hover {
+        color: rgba(255, 255, 255, 1);;
+    }
+
+    .main {
+        width: 100%;
+        height: 100%;
+        padding: 0.5rem;
+    }
+</style>
+
+
+<BitLayout>
+    <Header>
+        <BitHeader Class="header">
+            <BitStack Gap="1rem" Horizontal="true">
+                <NavLink Match="NavLinkMatch.All" class="text-decoration-none" href="/hangfire/discovery/">Discovery</NavLink>
+                <NavLink Match="NavLinkMatch.All" class="text-decoration-none" href="/hangfire/discovery/playground">Playground</NavLink>
+            </BitStack>
+        </BitHeader>
+    </Header>
+    <Main>
+        <div class="main">
+            @Body
+        </div>
+    </Main>
+</BitLayout>
+
