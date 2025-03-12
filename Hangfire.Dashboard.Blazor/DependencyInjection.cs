@@ -1,3 +1,4 @@
+using Bit.BlazorUI;
 using Hangfire.Dashboard.Blazor.Components;
 using Hangfire.Dashboard.Blazor.Postgresql;
 using Microsoft.AspNetCore.Builder;
@@ -12,7 +13,7 @@ public static class DependencyInjection
     public static IServiceCollection AddHangfireBlazorDashboard(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddHangfireDbContext(configuration);
-        
+        services.AddBitBlazorUIServices();
         services.AddRazorComponents()
             .AddInteractiveServerComponents();
         return services;

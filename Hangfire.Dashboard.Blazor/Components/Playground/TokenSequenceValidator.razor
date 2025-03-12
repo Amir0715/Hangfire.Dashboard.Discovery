@@ -1,0 +1,36 @@
+@using Hangfire.Dashboard.Blazor.Core.Helpers
+@using Hangfire.Dashboard.Blazor.Core.Tokenization
+@using Hangfire.Dashboard.Blazor.Core.Tokenization.Tokens
+
+<BitCard>
+    <BitText Typography="BitTypography.H4">Валидация выражения</BitText>
+    <BitText></BitText>
+    <BitTextField InputMode="BitInputMode.Text" Trim @bind-Value="@_query"></BitTextField>
+    <BitTag Text="@_tagText" Variant="BitVariant.Fill" Color="@_tagColor">@_queryIsValid</BitTag>
+    <BitButton OnClick="Validate" IsEnabled="@(!string.IsNullOrWhiteSpace(_query))">Провалидировать</BitButton>
+</BitCard>
+
+<BitCard FullWidth>
+    @foreach (var token in _tokens)
+    {
+        <BitTooltip Text="@token.Type.ToString()">
+            <span class="border-1 border-light border-opacity-75 p-1 font-monospace">
+                @token.ToString()
+            </span>   
+        </BitTooltip>
+    }
+</BitCard>
+
+@code {
+    private string? _query;
+    private bool _queryIsValid = false;
+    private List<Token> _tokens = [];
+    private BitColor _tagColor => _queryIsValid ? BitColor.Success : BitColor.Error;
+    private string _tagText => _queryIsValid ? "Валидно" : "Невалидно";
+
+    private void Validate()
+    {
+        _tokens = Tokenizer.Tokenize(_query).ToList();
+        _queryIsValid = QueryValidator.IsValidTokenSequence(_tokens);
+    }
+}
