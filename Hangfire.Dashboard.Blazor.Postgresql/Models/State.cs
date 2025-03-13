@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Hangfire.Dashboard.Blazor.Core.Models;
+﻿namespace Hangfire.Dashboard.Blazor.Core.Models;
 
 public class State
 {

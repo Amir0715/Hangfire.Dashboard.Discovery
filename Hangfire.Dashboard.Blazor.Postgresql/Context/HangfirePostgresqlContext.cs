@@ -4,9 +4,9 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Hangfire.Dashboard.Blazor.Postgresql.Context;
 
-public partial class HangfireContext : DbContext
+public partial class HangfirePostgresqlContext : DbContext
 {
-    public HangfireContext(DbContextOptions<HangfireContext> options)
+    public HangfirePostgresqlContext(DbContextOptions<HangfirePostgresqlContext> options)
         : base(options)
     {
     }

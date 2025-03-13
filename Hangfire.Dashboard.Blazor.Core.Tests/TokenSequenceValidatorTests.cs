@@ -1,5 +1,5 @@
-using Hangfire.Dashboard.Blazor.Core.Helpers;
 using Hangfire.Dashboard.Blazor.Core.Tests.Helpers;
+using Hangfire.Dashboard.Blazor.Core.Validators;
 using Xunit.Abstractions;
 
 namespace Hangfire.Dashboard.Blazor.Core.Tests;
@@ -183,6 +183,6 @@ public class TokenSequenceValidatorTests
     {
         _testOutputHelper.WriteLine(tokens.ToString());
         var actualIsValid = QueryValidator.IsValidTokenSequence(tokens);
-        Assert.Equal(expectedIsValid, actualIsValid);
+        Assert.Equal(expectedIsValid, actualIsValid.IsSuccess);
     }
 }

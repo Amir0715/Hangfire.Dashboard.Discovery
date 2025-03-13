@@ -1,12 +1,7 @@
 using Hangfire;
 using Hangfire.Dashboard.Blazor;
-using Hangfire.Dashboard.Blazor.Core;
-using Hangfire.Dashboard.Blazor.Core.Tokenization;
-using Hangfire.Dashboard.Blazor.Postgresql;
-using Hangfire.Dashboard.Blazor.Postgresql.Context;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +28,32 @@ app.UseStaticFiles();
 app.MapHangfireBlazorDashboard();
 app.MapHangfireDashboard(options: new DashboardOptions { Authorization = [] });
 
+app.MapGet("/success", (
+    [FromQuery] string? q,
+    [FromQuery] int? c,
+    [FromQuery] int? d,
+    IBackgroundJobClient backgroundJobClient
+) =>
+{
+    for (var i = 0; i < c.GetValueOrDefault(1); i++)
+    {
+        backgroundJobClient.Enqueue<JobClass>(job => job.Success(d));
+    }
+});
+
+app.MapGet("/error", (
+    [FromQuery] string? q,
+    [FromQuery] int? c,
+    [FromQuery] int? d,
+    IBackgroundJobClient backgroundJobClient
+) =>
+{
+    for (var i = 0; i < c.GetValueOrDefault(1); i++)
+    {
+        backgroundJobClient.Enqueue<JobClass>(job => job.Error(d));
+    }
+});
+
 app.Run();
 
 public class JobClass
@@ -44,7 +65,7 @@ public class JobClass
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async ValueTask ErrorMethod(int? delaySeconds = null)
+    public async ValueTask Error(int? delaySeconds = null)
     {
         if (delaySeconds.HasValue)
             await Task.Delay(TimeSpan.FromSeconds(delaySeconds.Value));
@@ -52,11 +73,11 @@ public class JobClass
         throw new ArgumentException("testing argument exception");
     }
 
-    public async ValueTask SuccessMethod(int? delaySeconds = null)
+    public async ValueTask Success(int? delaySeconds = null)
     {
         if (delaySeconds.HasValue)
             await Task.Delay(TimeSpan.FromSeconds(delaySeconds.Value));
 
-        _logger.LogInformation("{job} done after {delaySeconds}", nameof(SuccessMethod), delaySeconds);
+        _logger.LogInformation("{job} done after {delaySeconds}", nameof(Success), delaySeconds);
     }
 }

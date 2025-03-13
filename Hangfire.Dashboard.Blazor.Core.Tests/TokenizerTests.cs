@@ -1,6 +1,6 @@
+using Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 using Hangfire.Dashboard.Blazor.Core.Tests.Helpers;
 using Hangfire.Dashboard.Blazor.Core.Tokenization;
-using Hangfire.Dashboard.Blazor.Core.Tokenization.Tokens;
 
 namespace Hangfire.Dashboard.Blazor.Core.Tests;
 
@@ -65,8 +65,7 @@ public class TokenizerTests
     [MemberData(nameof(Tokenize_TestData))]
     public void Tokenizer_Should_Valid(string query, IEnumerable<Token> expectedTokens)
     {
-        var actualTokens = Tokenizer.Tokenize(query).ToList();
-
+        var actualTokens = new Tokenizer().Tokenize(query).ToList();
         Assert.Equal(expectedTokens, actualTokens);
     }
 }

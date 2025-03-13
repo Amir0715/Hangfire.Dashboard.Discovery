@@ -2,65 +2,30 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Hangfire.Dashboard.Blazor.Core.Tokenization.Tokens;
+using Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 
-namespace Hangfire.Dashboard.Blazor.Core.Helpers;
+namespace Hangfire.Dashboard.Blazor.Core.Validators;
 
 public static class QueryValidator
 {
-    /// <summary>
-    /// Валидирует строку на правильную скобочную последовательность.  
-    /// </summary>
-    /// <remarks>Игнорирует невалидные скобочные выражения внутри <c>"</c>.</remarks>
-    public static bool IsValidParenthesisSequence(string query)
-    {
-        // TODO: переделать на Result паттерн
-        // TODO: избавиться и реализовать валидатор на основе токенов
-        if (string.IsNullOrWhiteSpace(query))
-            return false;
-
-        var stack = new Stack<char>();
-        var insideQuotes = false;
-
-        foreach (var c in query)
-        {
-            if (c == '"')
-            {
-                insideQuotes = !insideQuotes;
-                continue;
-            }
-
-            if (insideQuotes)
-                continue;
-
-            if (c == '(')
-            {
-                stack.Push(c);
-            }
-            else if (c == ')')
-            {
-                if (stack.Count == 0 || stack.Pop() != '(')
-                {
-                    return false;
-                }
-            }
-        }
-
-        return stack.Count == 0 && !insideQuotes;
-    }
-
-    public static bool IsValidTokenSequence(IEnumerable<Token> tokens)
+    public static Result IsValidTokenSequence(IEnumerable<Token> tokens)
     {
         var tokensList = tokens.ToList();
 
         // Проверка на пустой список
         if (tokensList.Count == 0)
-            return false;
+            return Result.Failed("Последовательность токенов не может быть пустым");
 
         // Проверка наличия хотя бы одного оператора сравнения
         if (!tokensList.Any(t => t is OperatorToken { Operator: not OperatorType.And and not OperatorType.Or }))
-            return false;
+            return Result.Failed("Выражение должно содержать хотя-бы один оператор сравнения (>, >=, <, <=, ==, !=, ~=)");
 
+        var firstOperatorIndex = tokensList.FindIndex(t => t.Type == TokenType.Operator);
+        var lastOperatorIndex = tokensList.FindLastIndex(t => t.Type == TokenType.Operator);
+        
+        if (firstOperatorIndex == 0 || lastOperatorIndex == tokensList.Count - 1)
+            return Result.Failed("Выражение не может начинаться или заканчиваться на оператор");
+        
         // Проверка скобочной структуры и сбора пар
         var parenthesisStack = new Stack<int>();
         var parenthesisPairs = new List<(int Open, int Close)>();
@@ -74,7 +39,8 @@ public static class QueryValidator
             else if (token is ParenToken { Paren: ParenType.Close })
             {
                 if (parenthesisStack.Count == 0)
-                    return false;
+                    return Result.Failed("Все закрывающие скобки должны иметь пары");
+                
                 var openIndex = parenthesisStack.Pop();
                 parenthesisPairs.Add((openIndex, i));
             }
@@ -82,13 +48,13 @@ public static class QueryValidator
 
         // Незакрытые скобки
         if (parenthesisStack.Count != 0)
-            return false;
+            return Result.Failed("Все открывающие скобки должны иметь пары");
 
         // Проверка на пустые скобки
         foreach (var pair in parenthesisPairs)
         {
             if (pair.Close - pair.Open < 2)
-                return false;
+                return Result.Failed("Выражение не может содержать пустую пару скобок");
         }
 
         // Проверка операторов
@@ -97,9 +63,6 @@ public static class QueryValidator
             var current = tokensList[i];
             if (current is not OperatorToken op) continue;
 
-            if (i == 0 || i == tokensList.Count - 1)
-                return false;
-
             var prev = tokensList[i - 1];
             var next = tokensList[i + 1];
 
@@ -107,13 +70,13 @@ public static class QueryValidator
             {
                 // Оператор сравнения: между двумя операндами
                 if (!IsOperand(prev) || !IsOperand(next))
-                    return false;
+                    return Result.Failed("Оператор сравнения должен быть между двумя операндами");
             }
             else if (IsLogicalOperator(op.Operator))
             {
                 // Логический оператор: между выражениями (скобками или сравнениями)
                 if (i - 3 < 0 || i + 1 + 3 > tokensList.Count)
-                    return false;
+                    return Result.Failed("Неправильное расположение логического оператора");
                 
                 var prevSlice = CollectionsMarshal.AsSpan(tokensList).Slice(i - 3, 3);
                 var nextSlice = CollectionsMarshal.AsSpan(tokensList).Slice(i + 1, 3);
@@ -121,7 +84,7 @@ public static class QueryValidator
                 bool validNext = IsExpressionStart(nextSlice);
 
                 if (!validPrev || !validNext)
-                    return false;
+                    return Result.Failed("Неправильное расположение логического оператора");
             }
         }
 
@@ -131,7 +94,7 @@ public static class QueryValidator
             var current = tokensList[i];
             var next = tokensList[i + 1];
             if (IsOperand(current) && IsOperand(next))
-                return false;
+                return Result.Failed("После операнда ожидается оператор сравнения");
         }
 
         // Проверка на закрывающую скобку перед операндом или открывающей скобкой без оператора
@@ -143,11 +106,11 @@ public static class QueryValidator
             if (current is ParenToken { Paren: ParenType.Close } &&
                 (IsExpressionStart(next) || next is ParenToken { Paren: ParenType.Open }))
             {
-                return false;
+                return Result.Failed("Неправильно составление выражение");
             }
         }
 
-        return true;
+        return Result.Success();
     }
 
     // Вспомогательные методы

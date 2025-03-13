@@ -11,7 +11,7 @@ public class JobContext
     
     public string Type { get; set; }
     public string Method { get; set; }
-    public JsonDocument Arguments { get; set; }
+    public JsonDocument Args { get; set; }
     public Params Params { get; set; }
     
     public DateTime CreatedAt { get; set; }

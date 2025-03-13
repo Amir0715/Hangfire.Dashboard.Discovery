@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using FluentValidation;
 using FluentValidation.Results;
-using Hangfire.Dashboard.Blazor.Core.Helpers;
-using Hangfire.Dashboard.Blazor.Core.Tokenization.Tokens;
+using Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 
 namespace Hangfire.Dashboard.Blazor.Core.Validators;
 
@@ -13,9 +12,8 @@ public class TokenSequenceValidator : AbstractValidator<IEnumerable<Token>>
 {
     public override ValidationResult Validate(ValidationContext<IEnumerable<Token>> context)
     {
-        var validationResult = new ValidationResult();
-        var isValid = QueryValidator.IsValidTokenSequence(context.InstanceToValidate);
-        if (!isValid) validationResult.Errors.Add(new ValidationFailure());
-        return validationResult;
+        var validResult = QueryValidator.IsValidTokenSequence(context.InstanceToValidate);
+        if (!validResult.IsSuccess) context.AddFailure(context.PropertyPath, validResult.Error);
+        return base.Validate(context);
     }
 }

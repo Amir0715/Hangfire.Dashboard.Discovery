@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Text;
-using Hangfire.Dashboard.Blazor.Core.Tokenization.Tokens;
+using Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 
 namespace Hangfire.Dashboard.Blazor.Core.Tests.Helpers;
 

@@ -240,7 +240,7 @@ public class ExpressionGeneratorTests
             new()
             {
                 Type = "ScheduleEventHandleJob",
-                Arguments = JsonDocument.Parse(
+                Args = JsonDocument.Parse(
                         """
                         {
                            "name": "ScheduleEventHandleJob"
@@ -250,7 +250,7 @@ public class ExpressionGeneratorTests
             new()
             {
                 Type = "ScheduleEventHandleJob2",
-                Arguments = JsonDocument.Parse(
+                Args = JsonDocument.Parse(
                         """
                         {
                            "name": "ScheduleEventHandleJob2"
@@ -260,7 +260,7 @@ public class ExpressionGeneratorTests
             new()
             {
                 Type = "ScheduleEventHandleJob3",
-                Arguments = JsonDocument.Parse(
+                Args = JsonDocument.Parse(
                         """
                         {
                            "name": "ScheduleEventHandleJob3"
@@ -271,7 +271,7 @@ public class ExpressionGeneratorTests
 
         var actualExpression = expressionGenerator.GenerateExpression(tokens);
         _testOutputHelper.WriteLine(actualExpression.ToString());
-        Expression<Func<JobContext, bool>> expectedExpression = job => job.Arguments.RootElement.GetProperty("name").GetString() == "ScheduleEventHandleJob";
+        Expression<Func<JobContext, bool>> expectedExpression = job => job.Args.RootElement.GetProperty("name").GetString() == "ScheduleEventHandleJob";
         var actual = jobs.AsQueryable().Where(actualExpression).ToList();
         Assert.Equal(jobs.Count(expectedExpression.Compile()), actual.Count);
         Assert.True(actual.All(expectedExpression.Compile()));

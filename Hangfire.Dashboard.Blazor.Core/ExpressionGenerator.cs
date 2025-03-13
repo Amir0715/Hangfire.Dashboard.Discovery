@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text.Json;
-using Hangfire.Dashboard.Blazor.Core.Tokenization.Tokens;
+using Hangfire.Dashboard.Blazor.Core.Abstractions;
+using Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 
 namespace Hangfire.Dashboard.Blazor.Core;
 
-public class ExpressionGenerator
+public class ExpressionGenerator : IExpressionGenerator
 {
     public Expression<Func<JobContext, bool>> GenerateExpression(IEnumerable<Token> tokens)
     {
@@ -161,9 +162,4 @@ public class ExpressionGenerator
             _ => throw new ArgumentOutOfRangeException(nameof(operatorToken), operatorToken.Type, "Out of range")
         };
     }
-}
-
-public class LikeExpression : Expression
-{
-    
 }

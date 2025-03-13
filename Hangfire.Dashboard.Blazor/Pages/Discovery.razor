@@ -1,6 +1,40 @@
 @page "/hangfire/discovery"
-<h3>Discovery</h3>
+@using Hangfire.Dashboard.Blazor.Core.Abstractions
+@using Hangfire.Dashboard.Blazor.Core.Dtos
+@using Hangfire.Dashboard.Blazor.Core.Validators
+
+<BitCard>
+    <BitText Typography="BitTypography.H4">Валидация выражения</BitText>
+    <BitText></BitText>
+    <BitTextField InputMode="BitInputMode.Text" Trim @bind-Value="@_query.Query"></BitTextField>
+    <BitButton OnClick="SearchJobsAsync" IsEnabled="@(!string.IsNullOrWhiteSpace(_query.Query))">view</BitButton>
+    @if (!_resultJobs?.IsSuccess ?? false)
+    {
+        <BitTag Text="@_resultJobs.Error" Variant="BitVariant.Fill" Color="BitColor.Error" />
+    }
+</BitCard>
+
+<BitCard FullSize>
+    <BitDataGrid ResizableColumns Items="@_resultJobs?.Value?.AsQueryable()">
+        <BitDataGridPropertyColumn Property="x => x.Id"></BitDataGridPropertyColumn>
+        <BitDataGridPropertyColumn Property="x => x.Type"></BitDataGridPropertyColumn>
+        <BitDataGridPropertyColumn Property="x => x.Method"></BitDataGridPropertyColumn>
+        <BitDataGridPropertyColumn Property="x => x.Queue"></BitDataGridPropertyColumn>
+        <BitDataGridPropertyColumn Property="x => x.State"></BitDataGridPropertyColumn>
+        <BitDataGridPropertyColumn Property="x => x.CreatedAt"></BitDataGridPropertyColumn>
+        <BitDataGridPropertyColumn Property="x => x.ExpireAt"></BitDataGridPropertyColumn>
+    </BitDataGrid>
+</BitCard>
 
 @code {
+    private QueryDto _query = new ();
+    private Result<List<JobContext>>? _resultJobs;
     
+    [Inject]
+    private IJobProvider JobProvider { get; set; }
+
+    private async Task SearchJobsAsync()
+    {
+        _resultJobs = await JobProvider.SearchJobs(_query);
+    }
 }

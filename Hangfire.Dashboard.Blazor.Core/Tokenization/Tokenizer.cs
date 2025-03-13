@@ -1,13 +1,12 @@
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using Hangfire.Dashboard.Blazor.Core.Tokenization.Tokens;
+using Hangfire.Dashboard.Blazor.Core.Abstractions;
+using Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 
 namespace Hangfire.Dashboard.Blazor.Core.Tokenization;
 
-public static class Tokenizer
+public class Tokenizer : ITokenizer
 {
-    [Pure]
-    public static IEnumerable<Token> Tokenize(string query)
+    public IEnumerable<Token> Tokenize(string query)
     {
         query ??= string.Empty;
         query = query.Trim();
