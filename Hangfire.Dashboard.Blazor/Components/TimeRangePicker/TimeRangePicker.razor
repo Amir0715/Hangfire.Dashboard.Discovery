@@ -1,0 +1,100 @@
+<style>
+    :root {
+        --bit-shd-cal: none;
+    }
+
+    .bit-tfl-pre {
+        width: 50px;
+    }
+</style>
+
+<BitCallout @bind-IsOpen="@_isCalloutOpen">
+    <Anchor>
+        <BitButton OnClick="() => _isCalloutOpen = true" Variant="BitVariant.Outline">
+            <span>@DateTimeRange.StartDateTime.ToLocalTime().ToString("g")</span>
+            -
+            <span>
+                @(DateTimeRange.EndDateTime.HasValue ? DateTimeRange.EndDateTime.Value.ToString("g") : "now")
+            </span>
+        </BitButton>
+    </Anchor>
+    <Content>
+        <div class="p-2">
+            <BitPivot Size="BitSize.Small">
+                <BitPivotItem HeaderText="Absolute">
+                    <BitStack Class="row-gap-2">
+                        <DateTimeInput @bind-Value="@_startDateTimeOffset" Prefix="start"></DateTimeInput>
+                        <DateTimeInput @bind-Value="@_endDateTimeOffset" Prefix="end"></DateTimeInput>
+                        <BitDateRangePicker Standalone ShowTimePicker @bind-Value="@_rangePickerValue" AllowTextInput
+                                            HasBorder="false" Class="align-items-center mx-auto"/>
+                    </BitStack>
+                </BitPivotItem>
+                <BitPivotItem HeaderText="Relative">
+                    <RelativeDateTimePicker RelativeStartChanged="@RelativeStartChanged"/>
+                </BitPivotItem>
+            </BitPivot>
+            <div class="d-flex mt-2">
+                <BitButton Class="ms-auto" OnClick="@Submit">Submit</BitButton>
+            </div>
+        </div>
+    </Content>
+</BitCallout>
+
+@* Заготовленные выборы *@
+<BitCallout></BitCallout>
+
+@code {
+
+    [Parameter]
+    public DateTimeRange DateTimeRange { get; set; }
+
+    private bool _isCalloutOpen = false;
+
+    private DateTimeOffset? _startDateTimeOffset
+    {
+        get => _rangePickerValue.StartDate;
+        set => _rangePickerValue = new() { StartDate = value, EndDate = _rangePickerValue.EndDate };
+    }
+
+    private DateTimeOffset? _endDateTimeOffset
+    {
+        get => _rangePickerValue.EndDate;
+        set => _rangePickerValue = new() { EndDate = value, StartDate = _rangePickerValue.StartDate };
+    }
+
+    private BitDateRangePickerValue _rangePickerValue = new()
+    {
+        StartDate = DateTimeOffset.Now.Date,
+        EndDate = DateTimeOffset.Now.Date.AddDays(1).AddSeconds(-1),
+    };
+
+    protected override Task OnInitializedAsync()
+    {
+        var dateTimeOffsetToday = new DateTimeOffset(DateTime.Today, DateTimeOffset.Now.Offset);
+        DateTimeRange = new DateTimeRange()
+        {
+            StartDateTime = dateTimeOffsetToday,
+            EndDateTime = null
+        };
+        _startDateTimeOffset = DateTimeRange.StartDateTime;
+        _endDateTimeOffset = DateTimeRange.EndDateTime;
+        return base.OnInitializedAsync();
+    }
+
+    private void RelativeStartChanged(DateTimeOffset startDateTimeOffset)
+    {
+        _startDateTimeOffset = startDateTimeOffset;
+        _endDateTimeOffset = null;
+    }
+
+    private Task Submit()
+    {
+        _isCalloutOpen = false;
+        DateTimeRange = new DateTimeRange()
+        {
+            StartDateTime = _startDateTimeOffset.GetValueOrDefault(DateTimeOffset.Now.AddDays(-1)),
+            EndDateTime = _endDateTimeOffset
+        };
+        return Task.CompletedTask;
+    }
+}

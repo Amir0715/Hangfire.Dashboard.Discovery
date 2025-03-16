@@ -16,3 +16,7 @@ body {
         color: #adbac7;
     }
 }
+
+.cursor-pointer {
+    cursor: pointer !important;
+}

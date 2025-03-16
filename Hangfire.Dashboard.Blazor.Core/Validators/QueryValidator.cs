@@ -16,16 +16,26 @@ public static class QueryValidator
         if (tokensList.Count == 0)
             return Result.Failed("Последовательность токенов не может быть пустым");
 
+        var fieldAccessValidator = new FieldAccessValidator();
+        foreach (var fieldAccessToken in tokensList.OfType<FieldAccessToken>())
+        {
+            var validationResult = fieldAccessValidator.Validate(fieldAccessToken);
+            if (validationResult.IsValid) continue;
+
+            return Result.Failed(validationResult.ToString());
+        }
+
         // Проверка наличия хотя бы одного оператора сравнения
         if (!tokensList.Any(t => t is OperatorToken { Operator: not OperatorType.And and not OperatorType.Or }))
-            return Result.Failed("Выражение должно содержать хотя-бы один оператор сравнения (>, >=, <, <=, ==, !=, ~=)");
+            return Result.Failed(
+                "Выражение должно содержать хотя-бы один оператор сравнения (>, >=, <, <=, ==, !=, ~=)");
 
         var firstOperatorIndex = tokensList.FindIndex(t => t.Type == TokenType.Operator);
         var lastOperatorIndex = tokensList.FindLastIndex(t => t.Type == TokenType.Operator);
-        
+
         if (firstOperatorIndex == 0 || lastOperatorIndex == tokensList.Count - 1)
             return Result.Failed("Выражение не может начинаться или заканчиваться на оператор");
-        
+
         // Проверка скобочной структуры и сбора пар
         var parenthesisStack = new Stack<int>();
         var parenthesisPairs = new List<(int Open, int Close)>();
@@ -40,7 +50,7 @@ public static class QueryValidator
             {
                 if (parenthesisStack.Count == 0)
                     return Result.Failed("Все закрывающие скобки должны иметь пары");
-                
+
                 var openIndex = parenthesisStack.Pop();
                 parenthesisPairs.Add((openIndex, i));
             }
@@ -77,7 +87,7 @@ public static class QueryValidator
                 // Логический оператор: между выражениями (скобками или сравнениями)
                 if (i - 3 < 0 || i + 1 + 3 > tokensList.Count)
                     return Result.Failed("Неправильное расположение логического оператора");
-                
+
                 var prevSlice = CollectionsMarshal.AsSpan(tokensList).Slice(i - 3, 3);
                 var nextSlice = CollectionsMarshal.AsSpan(tokensList).Slice(i + 1, 3);
                 bool validPrev = IsExpressionEnd(prevSlice);
@@ -138,7 +148,7 @@ public static class QueryValidator
     {
         return tokens[0] is ParenToken { Paren: ParenType.Open } || IsExpression(tokens);
     }
-    
+
     private static bool IsExpressionStart(Token token)
     {
         return token is ParenToken { Paren: ParenType.Open } || IsOperand(token);
@@ -149,8 +159,7 @@ public static class QueryValidator
         return
             (tokens[0] is { Type: TokenType.FieldAccess } &&
              tokens[1] is OperatorToken { Operator: not OperatorType.And and not OperatorType.Or } &&
-             tokens[2] is { Type: TokenType.Constant }) || 
-            
+             tokens[2] is { Type: TokenType.Constant }) ||
             (tokens[0] is { Type: TokenType.Constant } &&
              tokens[1] is OperatorToken { Operator: not OperatorType.And and not OperatorType.Or } &&
              tokens[2] is { Type: TokenType.FieldAccess });
