@@ -1,0 +1,77 @@
+@using Microsoft.JSInterop
+<div style="height: 29px; width: 100%;">
+    <StandaloneCodeEditor Id="my-code-editor" ConstructionOptions="EditorConstructionOptions" CssClass="w-100 h-100" />
+</div>
+
+<script>
+    window.initializeMonarch = () => {
+        monaco.languages.register({id: "jql"});
+
+        // Register a tokens provider for the language
+        monaco.languages.setMonarchTokensProvider('jql', {
+            tokenizer: {
+                root: [
+                    [/\s+/, 'white'],
+                    [/\b(&&|\|\|)\b/, 'operator'],
+                    [/==|!=|>|<|>=|<=|~=/, 'operator'],
+                    [/\b[a-zA-Z_][a-zA-Z0-9_.]*\b/, 'keyword'],
+                    [/"([^"\\]|\\.)*"/, 'string'],
+                    [/\b\d+(\.\d+)?\b/, 'number'],
+                    [/[()]/, 'bracket'],
+                    [/\/\/.*$/, 'comment']
+                ]
+            }
+        });
+    }
+</script>
+
+@code {
+
+    [Inject]
+    private IJSRuntime JsRuntime { get; set; } = null!;
+
+    private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            AutomaticLayout = true,
+            Language = "jql",
+            Theme = "vs-dark",
+            Value = "Method == \"JobClass\"",
+            Minimap = new EditorMinimapOptions
+            {
+                Enabled = false
+            },
+            LineNumbers = "off",
+            WordWrap = "on",
+            Scrollbar = new EditorScrollbarOptions()
+            {
+                Vertical = "hidden"
+            },
+            BracketPairColorization = new BracketPairColorizationOptions() { Enabled = true },
+            GlyphMargin = false,
+            Folding = false,
+            LineDecorationsWidth = 0,
+            LineNumbersMinChars = 0,
+            RoundedSelection = false,
+            OverviewRulerLanes = 0,
+            OverviewRulerBorder = false,
+            Padding = new EditorPaddingOptions()
+            {
+                Top = 5,
+                Bottom = 5
+            }
+        };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JsRuntime.InvokeVoidAsync("initializeMonarch");
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+}

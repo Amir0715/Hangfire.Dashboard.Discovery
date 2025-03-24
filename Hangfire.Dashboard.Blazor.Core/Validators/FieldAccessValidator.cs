@@ -12,7 +12,6 @@ namespace Hangfire.Dashboard.Blazor.Core.Validators;
 public class FieldAccessValidator : AbstractValidator<FieldAccessToken>
 {
     private static Regex _fieldRegex;
-    private static string _fieldRegexString;
     
     static FieldAccessValidator()
     {
@@ -22,18 +21,17 @@ public class FieldAccessValidator : AbstractValidator<FieldAccessToken>
         {
             if (property.PropertyType == typeof(string))
             {
-                regexBuilder.Append($"^{property.Name}&|");
+                regexBuilder.Append($"^{property.Name}$|");
             } else if (property.PropertyType.IsAssignableTo(typeof(INumber<>)))
             {
-                regexBuilder.Append($"^{property.Name}&|");
+                regexBuilder.Append($"^{property.Name}$|");
             } else if (property.PropertyType == typeof(JsonDocument))
             {
-                regexBuilder.AppendFormat(@"^{0}\.\S+&|", property.Name);
+                regexBuilder.AppendFormat(@"^{0}\.\S+$|", property.Name);
             }
         }
 
-        _fieldRegex = new Regex(regexBuilder.ToString(), RegexOptions.Compiled, TimeSpan.FromMinutes(1));
-        _fieldRegexString = _fieldRegex.ToString();
+        _fieldRegex = new Regex(regexBuilder.ToString(), RegexOptions.Compiled | RegexOptions.CultureInvariant, TimeSpan.FromMinutes(1));
     }
     
     public override ValidationResult Validate(ValidationContext<FieldAccessToken> context)
@@ -42,6 +40,7 @@ public class FieldAccessValidator : AbstractValidator<FieldAccessToken>
         {
             context.AddFailure(context.InstanceToValidate.FieldPath, $"Неправильное обращение к полю, Обращение к полю должно удовлетворять регулярному выражению: {_fieldRegex}");
         }
+
         return base.Validate(context);
     }
 }
