@@ -3,6 +3,7 @@ using System.Text.Json;
 using Hangfire.Dashboard.Blazor.Core;
 using Hangfire.Dashboard.Blazor.Core.Abstractions;
 using Hangfire.Dashboard.Blazor.Postgresql.Context;
+using Hangfire.Dashboard.Blazor.Postgresql.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.Dashboard.Blazor.Postgresql.Implementations;
@@ -17,10 +18,11 @@ public class JobRepository : IJobRepository
                                      throw new ArgumentNullException(nameof(hangfirePostgresqlContext));
     }
 
-    public async Task<List<JobContext>> SearchAsync(Expression<Func<JobContext, bool>> queryExpression)
+    public async Task<List<JobContext>> SearchAsync(SearchQuery query)
     {
         var schema = _hangfirePostgresqlContext.States.EntityType.GetSchema();
         var stateTable = _hangfirePostgresqlContext.States.EntityType.GetTableName();
+        var queryExpression = query.QueryExpression;
         var jobs = await _hangfirePostgresqlContext.Database
             .SqlQueryRaw<JobContext>(
                 $"""
@@ -46,6 +48,8 @@ public class JobRepository : IJobRepository
                  FROM {schema}.job AS j
                  """)
             .Where(queryExpression)
+            .Where(job => job.CreatedAt >= query.StartDateTimeOffset.UtcDateTime)
+            .WhereIf(query.EndDateTimeOffset.HasValue, job => job.CreatedAt <= query.EndDateTimeOffset!.Value.UtcDateTime)
             .ToListAsync();
 
         return jobs;

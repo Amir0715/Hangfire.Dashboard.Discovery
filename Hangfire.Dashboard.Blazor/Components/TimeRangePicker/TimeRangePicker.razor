@@ -74,10 +74,9 @@
 
     protected override Task OnInitializedAsync()
     {
-        var dateTimeOffsetToday = new DateTimeOffset(DateTime.Today, DateTimeOffset.Now.Offset);
         DateTimeRange = new DateTimeRange()
         {
-            StartDateTime = dateTimeOffsetToday,
+            StartDateTime = DateTimeOffset.Now.Add(Constants.StartDateTimeOffsetByNow),
             EndDateTime = null
         };
         _startDateTimeOffset = DateTimeRange.StartDateTime;
@@ -96,7 +95,7 @@
         _isCalloutOpen = false;
         DateTimeRange = new DateTimeRange()
         {
-            StartDateTime = _startDateTimeOffset.GetValueOrDefault(DateTimeOffset.Now.AddDays(-1)),
+            StartDateTime = _startDateTimeOffset.GetValueOrDefault(DateTimeOffset.Now.Add(Constants.StartDateTimeOffsetByNow)),
             EndDateTime = _endDateTimeOffset
         };
         await DateTimeRangeChanged.InvokeAsync(DateTimeRange);

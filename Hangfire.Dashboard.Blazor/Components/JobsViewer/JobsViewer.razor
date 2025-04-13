@@ -153,6 +153,10 @@
         padding-top: 1rem;
         margin-top: 1rem;
     }
+    
+    .job-created-at {
+        margin-left: auto;
+    }
 </style>
 
 <!-- В секции параметров -->
@@ -172,7 +176,7 @@
                 <span>@job.JobName</span>
                 <span class="queue-tag">@job.Queue</span>
             </div>
-            <span class="">@job.CreatedAt.ToLocalTime()</span>
+            <span class="job-created-at">@job.CreatedAt.ToLocalTime()</span>
         </div>
 
         <!-- В карточке задачи -->
@@ -227,10 +231,10 @@
 @code {
 
     [Parameter]
-    public List<JobContext> Items { get; set; } = new();
+    public List<JobContext> Items { get; set; } = [];
 
-    private List<string> AllParams { get; set; } = new();
-    private List<string> SelectedParams { get; set; } = new();
+    private List<string> AllParams { get; set; } = [];
+    private List<string> SelectedParams { get; set; } = [];
     private Dictionary<long, bool> _expandedJobs = new();
 
     protected override void OnParametersSet()

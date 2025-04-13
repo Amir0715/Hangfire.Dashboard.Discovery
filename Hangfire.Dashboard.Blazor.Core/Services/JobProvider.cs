@@ -54,7 +54,12 @@ public class JobProvider : IJobProvider
         }
 
         var expression = _expressionGenerator.GenerateExpression(tokens);
-        var jobContexts = await _jobRepository.SearchAsync(expression);
+        var jobContexts = await _jobRepository.SearchAsync(new SearchQuery()
+        {
+            QueryExpression = expression,
+            StartDateTimeOffset = query.StartDateTimeOffset,
+            EndDateTimeOffset = query.EndDateTimeOffset
+        });
         return Result<List<JobContext>>.Success(jobContexts);
     }
 }
