@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Text.Json;
 using Hangfire.Dashboard.Blazor.Core;
 using Hangfire.Dashboard.Blazor.Core.Abstractions;
 using Hangfire.Dashboard.Blazor.Postgresql.Context;
@@ -12,23 +13,38 @@ public class JobRepository : IJobRepository
 
     public JobRepository(HangfirePostgresqlContext hangfirePostgresqlContext)
     {
-        _hangfirePostgresqlContext = hangfirePostgresqlContext ?? throw new ArgumentNullException(nameof(hangfirePostgresqlContext));
+        _hangfirePostgresqlContext = hangfirePostgresqlContext ??
+                                     throw new ArgumentNullException(nameof(hangfirePostgresqlContext));
     }
-    
+
     public async Task<List<JobContext>> SearchAsync(Expression<Func<JobContext, bool>> queryExpression)
     {
-        var jobs = await _hangfirePostgresqlContext.Jobs
-            .AsNoTracking()
-            .Select(x => new JobContext
-            {
-                Id = x.Id,
-                Type = x.Invocation.Type,
-                Method = x.Invocation.Method,
-                State = x.State,
-                Args = x.Arguments,
-                CreatedAt = x.Createdat,
-                ExpireAt = x.Expireat
-            })
+        var schema = _hangfirePostgresqlContext.States.EntityType.GetSchema();
+        var stateTable = _hangfirePostgresqlContext.States.EntityType.GetTableName();
+        var jobs = await _hangfirePostgresqlContext.Database
+            .SqlQueryRaw<JobContext>(
+                $"""
+                 SELECT j.id                          AS "Id",
+                        j.invocationdata ->> 'Type'   AS "Type",
+                        j.invocationdata ->> 'Method' AS "Method",
+                        j.statename                   AS "State",
+                        j.arguments                   AS "Args",
+                        j.createdat                   AS "CreatedAt",
+                        j.expireat                    AS "ExpireAt",
+                        (SELECT s.data
+                         FROM {schema}.state AS s
+                         WHERE s.jobid = j.id
+                         ORDER BY s.createdat DESC
+                         LIMIT 1)                     AS "StateData",
+                        (SELECT jsonb_object_agg(name, btrim(value, '" ')) AS params_json
+                         FROM {schema}.jobparameter
+                         WHERE jobId = j.id) as "Params",
+                        ((SELECT queue from {schema}.jobqueue where jobid = j.id LIMIT 1)
+                        UNION
+                        (SELECT 'default')
+                        LIMIT 1)                     as "Queue"
+                 FROM {schema}.job AS j
+                 """)
             .Where(queryExpression)
             .ToListAsync();
 

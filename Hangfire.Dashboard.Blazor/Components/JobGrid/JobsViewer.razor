@@ -1,0 +1,294 @@
+@using System.Text.Json
+@using Hangfire.Dashboard.Blazor.Components.TagSelector
+@implements IDisposable
+
+<style>
+    .job-card {
+        background: #2d333b;
+        border: 1px solid #444c56;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        padding: 1rem;
+        transition: box-shadow 0.2s ease;
+    }
+
+    .job-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .job-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .job-id-link {
+        color: #539bf5;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    .job-id-link:hover {
+        text-decoration: underline;
+    }
+
+    .job-title {
+        font-size: 1.1rem;
+        color: #adbac7;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .queue-tag {
+        background: rgba(91, 192, 222, 0.1);
+        border: 1px solid rgba(91, 192, 222, 0.3);
+        color: #5bc0de;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        border: 1px solid rgba(var(--state-color), 0.5);
+        background: rgba(var(--state-color), 0.1);
+        color: rgb(var(--state-color));
+    }
+
+    .param-selector {
+        background: #2d333b;
+        border: 1px solid #444c56;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .json-preview {
+        background: #1e2228;
+        border: 1px solid #444c56;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        max-height: 300px;
+        overflow: auto;
+        position: relative;
+    }
+    
+    .json-preview pre {
+        margin: 0;
+        text-wrap: auto;
+    }
+
+    .json-toggle {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px 0 0 0;
+        cursor: pointer;
+        color: #539bf5;
+    }
+
+    /* Обновленные стили для комментариев */
+    .comments-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+    }
+
+    .comment-tag {
+        background: rgba(65, 105, 225, 0.15);
+        border: 1px solid rgba(65, 105, 225, 0.3);
+        color: #5b8cff;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Стили для кнопки деталей */
+    .toggle-details-btn {
+        background: #373e47;
+        border: 1px solid #444c56;
+        color: #adbac7;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;: 0.5 rem 0;
+    }
+
+    .toggle-details-btn:hover {
+        background: #444c56;
+        transform: translateY(-1px);
+    }
+
+    .toggle-icon {
+        transition: transform 0.2s ease;
+    }
+
+    .toggle-icon.expanded {
+        transform: rotate(180deg);
+    }
+
+    .exception-tag {
+        background: rgba(220, 53, 69, 0.15);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        color: rgb(220 53 69);
+    }
+    
+    .details-panel {
+        border-top: solid 1px gray;
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+</style>
+
+<!-- В секции параметров -->
+<div class="param-selector">
+    <TagSelector Items="@AllParams"
+                 SelectedItems="@SelectedParams"
+                 SelectedItemsChanged="@(tags => SelectedParams = tags)"/>
+</div>
+
+@foreach (var job in Items)
+{
+    <div class="job-card">
+        <div class="job-header">
+            <a class="job-id-link" href="@($"/hangfire/jobs/details/{job.Id}")">#@job.Id</a>
+            <span class="status-badge @job.State.ToLower()">@job.State</span>
+            <div class="job-title">
+                <span>@job.JobName</span>
+                <span class="queue-tag">@job.Queue</span>
+            </div>
+            <span class="">@job.CreatedAt.ToLocalTime()</span>
+        </div>
+
+        <!-- В карточке задачи -->
+        <div class="comments-container">
+            @if (!string.IsNullOrEmpty(job.ExceptionMessage))
+            {
+                <div class="comment-tag exception-tag">
+                    <span>@job.ExceptionType:</span>
+                    <span>@job.ExceptionMessage</span>
+                </div>
+            }
+            
+            @foreach (var param in GetVisibleParams(job))
+            {
+                <div class="comment-tag">
+                    <span>@param.Key:</span>
+                    <span class="tag-value">@FormatJsonValue(param.Value)</span>
+                </div>
+            }
+        </div>
+
+        <button class="toggle-details-btn" @onclick="@(() => ToggleDetails(job))">
+            <span>@(_expandedJobs.ContainsKey(job.Id) ? "Скрыть детали" : "Показать детали")</span>
+            <i class="bi bi-chevron-down toggle-icon @(_expandedJobs.ContainsKey(job.Id) ? "expanded" : "")"></i>
+        </button>
+
+        @if (_expandedJobs.ContainsKey(job.Id))
+        {
+            <div class="details-panel">
+                <h4>Аргументы</h4>
+                <div class="json-preview">
+                    <pre>@PrettyPrintJson(job.Args.RootElement)</pre>
+                </div>
+
+                <h4>Параметры</h4>
+                <div class="json-preview">
+                    <pre>@PrettyPrintJson(job.Params.RootElement)</pre>
+                </div>
+
+                @if (job.StateData != null)
+                {
+                    <h4>Состояние</h4>
+                    <div class="json-preview">
+                        <pre>@PrettyPrintJson(job.StateData.RootElement)</pre>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public List<JobContext> Items { get; set; } = new();
+
+    private List<string> AllParams { get; set; } = new();
+    private List<string> SelectedParams { get; set; } = new();
+    private Dictionary<long, bool> _expandedJobs = new();
+
+    protected override void OnParametersSet()
+    {
+        UpdateAvailableParams();
+        base.OnParametersSet();
+    }
+
+    private void UpdateAvailableParams()
+    {
+        AllParams = Items
+            .SelectMany(j => j.Params.RootElement.EnumerateObject().Select(p => p.Name))
+            .Distinct()
+            .OrderBy(p => p)
+            .ToList();
+    }
+
+    private IEnumerable<KeyValuePair<string, JsonElement>> GetVisibleParams(JobContext job)
+    {
+        return job.Params.RootElement.EnumerateObject()
+            .Where(p => SelectedParams.Contains(p.Name))
+            .ToDictionary(x => x.Name, v => v.Value);
+    }
+
+    private string FormatJsonValue(JsonElement element)
+    {
+        return element.ToString();
+    }
+
+    private void ToggleDetails(JobContext job)
+    {
+        if (_expandedJobs.ContainsKey(job.Id))
+        {
+            _expandedJobs.Remove(job.Id);
+        }
+        else
+        {
+            _expandedJobs[job.Id] = true;
+        }
+    }
+
+    private static JsonSerializerOptions SerializerOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+    
+    private string PrettyPrintJson(JsonElement element)
+    {
+        return JsonSerializer.Serialize(element, SerializerOptions);
+    }
+
+    public void Dispose()
+    {
+        foreach (var job in Items)
+        {
+            job.Dispose();
+        }
+    }
+
+}

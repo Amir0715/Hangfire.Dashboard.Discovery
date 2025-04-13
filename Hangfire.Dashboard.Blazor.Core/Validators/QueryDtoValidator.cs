@@ -7,6 +7,6 @@ public class QueryDtoValidator : AbstractValidator<QueryDto>
 {
     public QueryDtoValidator()
     {
-        RuleFor(x => x.Query).NotEmpty();
+        RuleFor(x => x.QueryString).NotEmpty();
     }
 }

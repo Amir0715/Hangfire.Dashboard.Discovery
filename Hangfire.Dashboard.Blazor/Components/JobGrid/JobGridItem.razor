@@ -1,0 +1,36 @@
+<div class="d-flex justify-content-between">
+    <div class="d-flex gap-1 flex-column">
+        <div class="d-flex gap-1 align-items-baseline">
+            <a class="detail" href="@DetailHref" target="_blank">#@JobContext.Id</a>
+            <span class="@StateClass">@JobContext.State</span>
+            @if (!string.IsNullOrWhiteSpace(JobContext.Queue))
+            {
+                <span class="queue">@JobContext.Queue</span>
+            }
+
+            <div class="name">@JobContext.JobName</div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(JobContext.ExceptionMessage))
+        {
+            <div class="exception-message">@JobContext.ExceptionMessage</div>
+        }
+    </div>
+    <span class="date created-at ms-auto">
+        @if (JobContext.CreatedAt.ToLocalTime().Date == DateTime.Today)
+        {
+            @: @JobContext.CreatedAt.ToShortTimeString()
+        }
+        else
+        {
+            @: @JobContext.CreatedAt.ToString("g")
+        }
+    </span>
+</div>
+
+@code {
+    [Parameter]
+    public JobContext JobContext { get; set; }
+    
+    private string StateClass => $"state {JobContext.State.ToLower()}";
+    private string DetailHref => $"/hangfire/jobs/details/{JobContext.Id}";
+}

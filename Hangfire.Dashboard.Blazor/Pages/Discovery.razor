@@ -3,38 +3,47 @@
 @using Hangfire.Dashboard.Blazor.Core.Dtos
 @using Hangfire.Dashboard.Blazor.Core.Validators
 
-<BitCard>
-    <BitText Typography="BitTypography.H4">Валидация выражения</BitText>
-    <BitText></BitText>
-    <BitTextField InputMode="BitInputMode.Text" Trim @bind-Value="@_query.Query"></BitTextField>
-    <BitButton OnClick="SearchJobsAsync" IsEnabled="@(!string.IsNullOrWhiteSpace(_query.Query))">view</BitButton>
-    @if (!_resultJobs?.IsSuccess ?? false)
-    {
-        <BitTag Text="@_resultJobs.Error" Variant="BitVariant.Fill" Color="BitColor.Error" />
-    }
-</BitCard>
 
-<BitCard FullSize>
-    <BitDataGrid ResizableColumns Items="@_resultJobs?.Value?.AsQueryable()">
-        <BitDataGridPropertyColumn Property="x => x.Id"></BitDataGridPropertyColumn>
-        <BitDataGridPropertyColumn Property="x => x.Type"></BitDataGridPropertyColumn>
-        <BitDataGridPropertyColumn Property="x => x.Method"></BitDataGridPropertyColumn>
-        <BitDataGridPropertyColumn Property="x => x.Queue"></BitDataGridPropertyColumn>
-        <BitDataGridPropertyColumn Property="x => x.State"></BitDataGridPropertyColumn>
-        <BitDataGridPropertyColumn Property="x => x.CreatedAt"></BitDataGridPropertyColumn>
-        <BitDataGridPropertyColumn Property="x => x.ExpireAt"></BitDataGridPropertyColumn>
-    </BitDataGrid>
-</BitCard>
+<div class="mb-2">
+    <div class="d-flex gap-1">
+        <QueryInput Class="flex-shrink-1 flex-grow-0" @bind-Query="@_query.QueryString"/>
+        <div style="min-width: 250px;">
+            <TimeRangePicker @bind-DateTimeRange="@_dateTimeRange"/>
+        </div>
+        <BitButton OnClick="SearchJobsAsync" @bind-IsLoading="@_isLoading">
+            Поиск
+        </BitButton>
+    </div>
+    @if(!(_resultJobs?.IsSuccess ?? true))
+    {
+        <BitMessage Color="BitColor.Error" Variant="BitVariant.Text">
+            @_resultJobs?.Error
+        </BitMessage>
+    }
+</div>
+<div>
+    @* <JobGrid Items="@_jobs" /> *@
+    <JobsViewer Items="@_jobs" />
+</div>
 
 @code {
-    private QueryDto _query = new ();
+    private QueryDto _query = new();
     private Result<List<JobContext>>? _resultJobs;
+    private DateTimeRange _dateTimeRange = new();
+    private bool _isLoading = false;
+    private List<JobContext> _jobs = [];
     
     [Inject]
     private IJobProvider JobProvider { get; set; }
 
     private async Task SearchJobsAsync()
     {
+        _query.StartDateTimeOffset = _dateTimeRange.StartDateTime;
+        _query.EndDateTimeOffset = _dateTimeRange.EndDateTime;
         _resultJobs = await JobProvider.SearchJobs(_query);
+        if (_resultJobs.IsSuccess)
+        {
+            _jobs = _resultJobs.Value ?? [];
+        }
     }
 }

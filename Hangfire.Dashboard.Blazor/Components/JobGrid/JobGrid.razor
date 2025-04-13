@@ -1,0 +1,22 @@
+@* <BitCard FullSize> *@
+@*     <BitDataGrid ResizableColumns Items="@Items.AsQueryable()"> *@
+@*         <BitDataGridPropertyColumn Property="x => x.Id"></BitDataGridPropertyColumn> *@
+@*         <BitDataGridPropertyColumn Property="x => x.Type"></BitDataGridPropertyColumn> *@
+@*         <BitDataGridPropertyColumn Property="x => x.Method"></BitDataGridPropertyColumn> *@
+@*         <BitDataGridPropertyColumn Property="x => x.Queue"></BitDataGridPropertyColumn> *@
+@*         <BitDataGridPropertyColumn Property="x => x.State"></BitDataGridPropertyColumn> *@
+@*         <BitDataGridPropertyColumn Property="x => x.CreatedAt"></BitDataGridPropertyColumn> *@
+@*         <BitDataGridPropertyColumn Property="x => x.ExpireAt"></BitDataGridPropertyColumn> *@
+@*     </BitDataGrid> *@
+@* </BitCard> *@
+@* <div class="d-flex flex-column gap-3"> *@
+@*     @foreach (var item in Items) *@
+@*     { *@
+@*         <JobGridItem JobContext="item" /> *@
+@*     } *@
+@* </div> *@
+@code {
+
+    [Parameter]
+    public List<JobContext> Items { get; set; } = [];
+}

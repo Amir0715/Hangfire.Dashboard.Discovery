@@ -1,4 +1,5 @@
 ﻿using Hangfire.Dashboard.Blazor.Core.Models;
+using Hangfire.Dashboard.Blazor.Postgresql.Models;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 

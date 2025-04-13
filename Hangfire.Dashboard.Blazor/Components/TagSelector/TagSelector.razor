@@ -1,0 +1,143 @@
+<div class="tag-selector">
+    <div class="selected-tags">
+        @foreach (var tag in SelectedItems)
+        {
+            <div class="tag">
+                <span>@tag</span>
+                <button class="remove-btn" @onclick="@(() => RemoveTag(tag))">&times;</button>
+            </div>
+        }
+    </div>
+    
+    <input type="text" 
+           class="tag-input"
+           placeholder="Выберите параметры..."
+           @oninput="@(e => SearchText = e.Value?.ToString())"
+           @onfocus="@(() => _showDropdown = true)"
+           @onblur="@HideDropdown"/>
+    
+    @if (_showDropdown)
+    {
+        <div class="tag-dropdown">
+            @foreach (var tag in FilteredTags)
+            {
+                <div class="dropdown-item"
+                     @onmousedown="@(() => AddTag(tag))">
+                    @tag
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .tag-selector {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+    }
+
+    .selected-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .tag {
+        background: #373e47;
+        border: 1px solid #444c56;
+        border-radius: 15px;
+        padding: 0.25rem 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .remove-btn {
+        background: none;
+        border: none;
+        color: #adbac7;
+        cursor: pointer;
+        padding: 0;
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    .tag-input {
+        width: 100%;
+        padding: 0.5rem;
+        background: #2d333b;
+        border: 1px solid #444c56;
+        border-radius: 4px;
+        color: #adbac7;
+    }
+
+    .tag-dropdown {
+        position: absolute;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        background: #2d333b;
+        border: 1px solid #444c56;
+        border-radius: 4px;
+        z-index: 100;
+        margin-top: 0.25rem;
+    }
+
+    .dropdown-item {
+        padding: 0.5rem;
+        cursor: pointer;
+    }
+
+    .dropdown-item:hover {
+        background: #373e47;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public List<string> Items { get; set; } = new();
+
+    [Parameter]
+    public List<string> SelectedItems { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<List<string>> SelectedItemsChanged { get; set; }
+
+    private string SearchText { get; set; } = string.Empty;
+    private bool _showDropdown = false;
+
+    private List<string> FilteredTags => Items
+        .Where(t => t.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+        .Except(SelectedItems)
+        .OrderBy(t => t)
+        .ToList();
+
+    private async Task HideDropdown()
+    {
+        await Task.Delay(200); // Даем время для обработки клика
+        _showDropdown = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AddTag(string tag)
+    {
+        Console.WriteLine($"AddTag, {tag}");
+        if (!SelectedItems.Contains(tag))
+        {
+            SelectedItems.Add(tag);
+            await SelectedItemsChanged.InvokeAsync(SelectedItems);
+            SearchText = string.Empty;
+            _showDropdown = true;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task RemoveTag(string tag)
+    {
+        SelectedItems.Remove(tag);
+        await SelectedItemsChanged.InvokeAsync(SelectedItems);
+    }
+}

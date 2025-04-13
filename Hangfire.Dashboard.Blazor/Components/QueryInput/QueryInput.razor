@@ -1,6 +1,6 @@
 @using Microsoft.JSInterop
-<div style="height: 29px; width: 100%;">
-    <StandaloneCodeEditor Id="my-code-editor" ConstructionOptions="EditorConstructionOptions" CssClass="w-100 h-100" />
+<div style="width: 100%;" class="@Class">
+    <StandaloneCodeEditor Id="my-code-editor" ConstructionOptions="EditorConstructionOptions" CssClass="w-100 h-100" OnDidChangeModelContent="OnModelContentChanged" @ref="@_editor"/>
 </div>
 
 <script>
@@ -26,7 +26,17 @@
 </script>
 
 @code {
+    private StandaloneCodeEditor _editor;
 
+    [Parameter]
+    public string Class { get; set; }
+    
+    [Parameter]
+    public string Query { get; set; }
+
+    [Parameter]
+    public EventCallback<string> QueryChanged { get; set; }
+    
     [Inject]
     private IJSRuntime JsRuntime { get; set; } = null!;
 
@@ -37,7 +47,7 @@
             AutomaticLayout = true,
             Language = "jql",
             Theme = "vs-dark",
-            Value = "Method == \"JobClass\"",
+            Value = "Type ~= \"JobClass\"",
             Minimap = new EditorMinimapOptions
             {
                 Enabled = false
@@ -72,6 +82,13 @@
         }
 
         await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task OnModelContentChanged()
+    {
+        var editorValue = await _editor.GetValue();
+        Query = editorValue;
+        await QueryChanged.InvokeAsync(editorValue);
     }
 
 }

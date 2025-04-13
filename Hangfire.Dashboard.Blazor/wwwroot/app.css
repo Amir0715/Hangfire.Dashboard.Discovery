@@ -20,3 +20,38 @@ body {
 .cursor-pointer {
     cursor: pointer !important;
 }
+
+.state, .queue {
+    --state-color-rgb: rgb(var(--state-color));
+
+    border: solid 1px;
+    padding: 2px 5px;
+    border-radius: 8px;
+    font-family: monospace;
+    border-color: var(--state-color-rgb);
+    background: rgba(var(--state-color), .7);
+}
+
+.queue {
+    --state-color: 169, 169, 169;
+}
+
+.succeeded {
+    --state-color: 0, 100, 0;
+}
+
+.enqueued {
+    --state-color: 91, 192, 222;
+}
+
+.scheduled {
+    --state-color: 255, 69, 0;
+}
+
+.processing {
+    --state-color: 111, 66, 193;
+}
+
+.failed {
+    --state-color: 139, 0, 0;
+}

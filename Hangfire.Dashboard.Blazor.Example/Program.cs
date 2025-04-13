@@ -35,10 +35,21 @@ app.MapGet("/success", (
     IBackgroundJobClient backgroundJobClient
 ) =>
 {
-    for (var i = 0; i < c.GetValueOrDefault(1); i++)
+    if (string.IsNullOrWhiteSpace(q))
     {
-        backgroundJobClient.Enqueue<JobClass>(job => job.Success(d));
+        for (var i = 0; i < c.GetValueOrDefault(1); i++)
+        {
+            backgroundJobClient.Enqueue<JobClass>(job => job.Success(d));
+        }
     }
+    else
+    {
+        for (var i = 0; i < c.GetValueOrDefault(1); i++)
+        {
+            backgroundJobClient.Enqueue<JobClass>(q, job => job.Success(d));
+        }
+    }
+    
 });
 
 app.MapGet("/error", (
@@ -48,9 +59,19 @@ app.MapGet("/error", (
     IBackgroundJobClient backgroundJobClient
 ) =>
 {
-    for (var i = 0; i < c.GetValueOrDefault(1); i++)
+    if (string.IsNullOrWhiteSpace(q))
     {
-        backgroundJobClient.Enqueue<JobClass>(job => job.Error(d));
+        for (var i = 0; i < c.GetValueOrDefault(1); i++)
+        {
+            backgroundJobClient.Enqueue<JobClass>(job => job.Error(d));
+        }
+    }
+    else
+    {
+        for (var i = 0; i < c.GetValueOrDefault(1); i++)
+        {
+            backgroundJobClient.Enqueue<JobClass>(q, job => job.Error(d));
+        }
     }
 });
 

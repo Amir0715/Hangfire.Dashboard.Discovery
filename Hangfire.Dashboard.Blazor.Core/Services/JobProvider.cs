@@ -35,7 +35,7 @@ public class JobProvider : IJobProvider
     
     public async ValueTask<Result<List<JobContext>>> SearchJobs(QueryDto query)
     {
-        var tokens = _tokenizer.Tokenize(query.Query).ToList();
+        var tokens = _tokenizer.Tokenize(query.QueryString).ToList();
         // ReSharper disable once MethodHasAsyncOverload
         var validationResult = _tokensValidator.Validate(tokens);
         if (!validationResult.IsValid)

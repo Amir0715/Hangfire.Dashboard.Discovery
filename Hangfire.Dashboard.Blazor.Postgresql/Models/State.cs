@@ -1,4 +1,7 @@
-﻿namespace Hangfire.Dashboard.Blazor.Core.Models;
+﻿using System.Text.Json;
+using Hangfire.Dashboard.Blazor.Core.Models;
+
+namespace Hangfire.Dashboard.Blazor.Postgresql.Models;
 
 public class State
 {
@@ -12,7 +15,7 @@ public class State
 
     public DateTime Createdat { get; set; }
 
-    public string? Data { get; set; }
+    public JsonDocument? Data { get; set; }
 
     public int Updatecount { get; set; }
 

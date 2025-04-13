@@ -11,6 +11,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddHangfireDbContext(this IServiceCollection services, IConfiguration configuration)
     {
+        // TODO: Надо переиспользовать коннекшен от DataSource
+        // TODO: Вытащить схему из конфигурации hangfire postgresql
         services.AddScoped<IJobRepository, JobRepository>();
         services.AddDbContext<HangfirePostgresqlContext>(options =>
         {

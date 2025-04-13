@@ -8,14 +8,11 @@
     }
 </style>
 
-<BitCallout @bind-IsOpen="@_isCalloutOpen">
+<BitCallout @bind-IsOpen="@_isCalloutOpen" Classes="@_calloutClassStyles">
     <Anchor>
-        <BitButton OnClick="() => _isCalloutOpen = true" Variant="BitVariant.Outline">
-            <span>@DateTimeRange.StartDateTime.ToLocalTime().ToString("g")</span>
-            -
-            <span>
-                @(DateTimeRange.EndDateTime.HasValue ? DateTimeRange.EndDateTime.Value.ToString("g") : "now")
-            </span>
+        <BitButton OnClick="() => _isCalloutOpen = true" Variant="BitVariant.Outline" Style="white-space: nowrap;" FullWidth>
+            <span>@DateTimeRange.StartDateTime.ToLocalTime().ToString("g")-</span>
+            <span>@(DateTimeRange.EndDateTime.HasValue ? DateTimeRange.EndDateTime.Value.ToString("g") : "now")</span>
         </BitButton>
     </Anchor>
     <Content>
@@ -47,8 +44,15 @@
 
     [Parameter]
     public DateTimeRange DateTimeRange { get; set; }
+    
+    [Parameter]
+    public EventCallback<DateTimeRange> DateTimeRangeChanged { get; set; }
 
     private bool _isCalloutOpen = false;
+    private BitCalloutClassStyles _calloutClassStyles = new()
+    {
+        AnchorContainer = "w-100"
+    };
 
     private DateTimeOffset? _startDateTimeOffset
     {
@@ -87,7 +91,7 @@
         _endDateTimeOffset = null;
     }
 
-    private Task Submit()
+    private async Task Submit()
     {
         _isCalloutOpen = false;
         DateTimeRange = new DateTimeRange()
@@ -95,6 +99,6 @@
             StartDateTime = _startDateTimeOffset.GetValueOrDefault(DateTimeOffset.Now.AddDays(-1)),
             EndDateTime = _endDateTimeOffset
         };
-        return Task.CompletedTask;
+        await DateTimeRangeChanged.InvokeAsync(DateTimeRange);
     }
 }

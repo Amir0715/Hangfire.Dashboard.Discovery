@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Hangfire.Dashboard.Blazor.Core;
 
-public class JobContext
+public class JobContext : IDisposable
 {
     public long Id { get; set; }
     public string State { get; set; }
@@ -12,17 +12,45 @@ public class JobContext
     public string Type { get; set; }
     public string Method { get; set; }
     public JsonDocument Args { get; set; }
-    public Params Params { get; set; }
+    public JsonDocument Params { get; set; }
+    public JsonDocument? StateData { get; set; }
     
     public DateTime CreatedAt { get; set; }
     public DateTime? ExpireAt { get; set; }
-}
-
-
-/// <summary>
-/// Параметры задачи, возможно будут DynamicObject
-/// </summary>
-public class Params
-{
     
+    public string JobName => $"{Type.Split(',')[0]}.{Method}";
+
+    public string? ExceptionType
+    {
+        get
+        {
+            if (StateData == null || 
+                !StateData.RootElement.TryGetProperty(nameof(ExceptionType), out var jsonElement))
+            {
+                return null;
+            }
+
+            return jsonElement.GetString();
+        }
+    }
+    
+    public string? ExceptionMessage
+    {
+        get
+        {
+            if (StateData == null || !StateData.RootElement.TryGetProperty(nameof(ExceptionMessage), out var jsonElement))
+            {
+                return null;
+            }
+
+            return jsonElement.GetString();
+        }
+    }
+
+    public void Dispose()
+    {
+        Args.Dispose();
+        Params.Dispose();
+        StateData?.Dispose();
+    }
 }
