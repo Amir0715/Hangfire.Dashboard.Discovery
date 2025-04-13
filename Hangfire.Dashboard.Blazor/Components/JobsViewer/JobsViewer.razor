@@ -1,5 +1,6 @@
 @using System.Text.Json
 @using Hangfire.Dashboard.Blazor.Components.TagSelector
+@using Microsoft.JSInterop
 @implements IDisposable
 
 <style>
@@ -66,7 +67,6 @@
         border: 1px solid #444c56;
         border-radius: 6px;
         padding: 0.5rem;
-        margin-bottom: 1rem;
     }
 
     .json-preview {
@@ -79,7 +79,7 @@
         overflow: auto;
         position: relative;
     }
-    
+
     .json-preview pre {
         margin: 0;
         text-wrap: auto;
@@ -147,15 +147,21 @@
         border: 1px solid rgba(220, 53, 69, 0.3);
         color: rgb(220 53 69);
     }
-    
+
     .details-panel {
         border-top: solid 1px gray;
         padding-top: 1rem;
         margin-top: 1rem;
     }
-    
+
     .job-created-at {
         margin-left: auto;
+    }
+    
+    .jobs {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+        margin-top: 0.5rem;
     }
 </style>
 
@@ -165,87 +171,178 @@
                  SelectedItems="@SelectedParams"
                  SelectedItemsChanged="@(tags => SelectedParams = tags)"/>
 </div>
-
-@foreach (var job in Items)
-{
-    <div class="job-card">
-        <div class="job-header">
-            <a class="job-id-link" href="@($"/hangfire/jobs/details/{job.Id}")">#@job.Id</a>
-            <span class="status-badge @job.State.ToLower()">@job.State</span>
-            <div class="job-title">
-                <span>@job.JobName</span>
-                <span class="queue-tag">@job.Queue</span>
+<div class="jobs">
+    @foreach (var job in _items)
+    {
+        <div class="job-card">
+            <div class="job-header">
+                <a class="job-id-link" href="@($"/hangfire/jobs/details/{job.Id}")">#@job.Id</a>
+                <span class="status-badge @job.State.ToLower()">@job.State</span>
+                <div class="job-title">
+                    <span>@job.JobName</span>
+                    <span class="queue-tag">@job.Queue</span>
+                </div>
+                <span class="job-created-at">@job.CreatedAt.ToLocalTime()</span>
             </div>
-            <span class="job-created-at">@job.CreatedAt.ToLocalTime()</span>
-        </div>
 
-        <!-- В карточке задачи -->
-        <div class="comments-container">
-            @if (!string.IsNullOrEmpty(job.ExceptionMessage))
-            {
-                <div class="comment-tag exception-tag">
-                    <span>@job.ExceptionType:</span>
-                    <span>@job.ExceptionMessage</span>
-                </div>
-            }
-            
-            @foreach (var param in GetVisibleParams(job))
-            {
-                <div class="comment-tag">
-                    <span>@param.Key:</span>
-                    <span class="tag-value">@FormatJsonValue(param.Value)</span>
-                </div>
-            }
-        </div>
-
-        <button class="toggle-details-btn" @onclick="@(() => ToggleDetails(job))">
-            <span>@(_expandedJobs.ContainsKey(job.Id) ? "Скрыть детали" : "Показать детали")</span>
-            <i class="bi bi-chevron-down toggle-icon @(_expandedJobs.ContainsKey(job.Id) ? "expanded" : "")"></i>
-        </button>
-
-        @if (_expandedJobs.ContainsKey(job.Id))
-        {
-            <div class="details-panel">
-                <h4>Аргументы</h4>
-                <div class="json-preview">
-                    <pre>@PrettyPrintJson(job.Args.RootElement)</pre>
-                </div>
-
-                <h4>Параметры</h4>
-                <div class="json-preview">
-                    <pre>@PrettyPrintJson(job.Params.RootElement)</pre>
-                </div>
-
-                @if (job.StateData != null)
+            <!-- В карточке задачи -->
+            <div class="comments-container">
+                @if (!string.IsNullOrEmpty(job.ExceptionMessage))
                 {
-                    <h4>Состояние</h4>
-                    <div class="json-preview">
-                        <pre>@PrettyPrintJson(job.StateData.RootElement)</pre>
+                    <div class="comment-tag exception-tag">
+                        <span>@job.ExceptionType:</span>
+                        <span>@job.ExceptionMessage</span>
+                    </div>
+                }
+
+                @foreach (var param in GetVisibleParams(job))
+                {
+                    <div class="comment-tag">
+                        <span>@param.Key:</span>
+                        <span class="tag-value">@FormatJsonValue(param.Value)</span>
                     </div>
                 }
             </div>
-        }
-    </div>
-}
+
+            <button class="toggle-details-btn" @onclick="@(() => ToggleDetails(job))">
+                <span>@(_expandedJobs.ContainsKey(job.Id) ? "Скрыть детали" : "Показать детали")</span>
+                <i class="bi bi-chevron-down toggle-icon @(_expandedJobs.ContainsKey(job.Id) ? "expanded" : "")"></i>
+            </button>
+
+            @if (_expandedJobs.ContainsKey(job.Id))
+            {
+                <div class="details-panel">
+                    <h4>Аргументы</h4>
+                    <div class="json-preview">
+                        <pre>@PrettyPrintJson(job.Args.RootElement)</pre>
+                    </div>
+
+                    <h4>Параметры</h4>
+                    <div class="json-preview">
+                        <pre>@PrettyPrintJson(job.Params.RootElement)</pre>
+                    </div>
+
+                    @if (job.StateData != null)
+                    {
+                        <h4>Состояние</h4>
+                        <div class="json-preview">
+                            <pre>@PrettyPrintJson(job.StateData.RootElement)</pre>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    @if (_isLoadingMore)
+    {
+        <div class="loading-indicator">
+            Загрузка...
+        </div>
+    }
+    
+    <div @ref="@_intersectionObserverTargetElement" style="width: 1px;"></div>
+</div>
+
+<script>
+    function registerScrollHandler(element, dotNetInstance) {
+        console.log("registerScrollHandler called with", element, dotNetInstance);
+        let observer = new IntersectionObserver(async (entries) => {
+            console.log("intersectionObserver", entries);
+            if (entries[0].isIntersecting) {
+                await dotNetInstance.invokeMethodAsync('CallLoadMoreItems');
+            }
+        }, { threshold: 1.0 });
+
+        observer.observe(element);
+    }
+
+    function unregisterScrollHandler(element) {
+        // Логика для отключения observer
+    }
+</script>
 
 @code {
 
     [Parameter]
-    public List<JobContext> Items { get; set; } = [];
+    public IEnumerable<JobContext> Items { get; set; }
 
+    private List<JobContext> _items;
+
+    [Parameter]
+    public Func<Task<IEnumerable<JobContext>>> LoadMoreItems { get; set; }
+
+    [Inject]
+    public IJSRuntime JsRuntime { get; set; }
+    
     private List<string> AllParams { get; set; } = [];
     private List<string> SelectedParams { get; set; } = [];
     private Dictionary<long, bool> _expandedJobs = new();
+    private ElementReference _intersectionObserverTargetElement;
+    private bool _isLoadingMore;
+    private bool _notMoreItems;
+    private DotNetObjectReference<JobsViewer>? _dotNetObjectReference;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         UpdateAvailableParams();
-        base.OnParametersSet();
+        if (Items == null && LoadMoreItems != null)
+        {
+            Items = await LoadMoreItems.Invoke();
+        }
+
+        if (Items == null && LoadMoreItems == null)
+        {
+            Items = [];
+        }
+
+        _items = Items?.ToList() ?? [];
+
+        await base.OnParametersSetAsync();
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetObjectReference = DotNetObjectReference.Create(this);
+            await JsRuntime.InvokeVoidAsync("registerScrollHandler", _intersectionObserverTargetElement, _dotNetObjectReference);
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    [JSInvokable]
+    public async Task CallLoadMoreItems()
+    {
+        Console.WriteLine("CallLoadMoreItems");
+        if (LoadMoreItems == null || _notMoreItems || _isLoadingMore || _items.Count == 0) return;
+        
+        _isLoadingMore = true;
+        StateHasChanged();
+
+        try
+        {
+            var moreItems = await LoadMoreItems.Invoke();
+            Console.WriteLine($"LoadMoreItems return = {moreItems.Count()} items");
+            if (!moreItems.Any())
+            {
+                _notMoreItems = true;
+                return;
+            }
+            _items.AddRange(moreItems);
+            UpdateAvailableParams();
+        }
+        finally
+        {
+            _isLoadingMore = false;
+            StateHasChanged();
+        }
     }
 
     private void UpdateAvailableParams()
     {
-        AllParams = Items
+        AllParams = _items
             .SelectMany(j => j.Params.RootElement.EnumerateObject().Select(p => p.Name))
             .Distinct()
             .OrderBy(p => p)
@@ -281,7 +378,7 @@
         WriteIndented = true,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
-    
+
     private string PrettyPrintJson(JsonElement element)
     {
         return JsonSerializer.Serialize(element, SerializerOptions);
@@ -292,6 +389,12 @@
         foreach (var job in Items)
         {
             job.Dispose();
+        }
+
+        if (_dotNetObjectReference != null)
+        {
+            JsRuntime.InvokeVoid("unregisterScrollHandler", _intersectionObserverTargetElement);
+            _dotNetObjectReference.Dispose();
         }
     }
 

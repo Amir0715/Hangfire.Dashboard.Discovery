@@ -33,14 +33,15 @@ public class JobProvider : IJobProvider
         _jobRepository = jobRepository ?? throw new ArgumentNullException(nameof(jobRepository));
     }
     
-    public async ValueTask<Result<List<JobContext>>> SearchJobs(QueryDto query)
+    public async ValueTask<Result<TimePaginationResult<JobContext>>> SearchJobs(TimePaginationQuery<QueryDto> paginationQueryDto)
     {
+        var query = paginationQueryDto.Data;
         var tokens = _tokenizer.Tokenize(query.QueryString).ToList();
         // ReSharper disable once MethodHasAsyncOverload
         var validationResult = _tokensValidator.Validate(tokens);
         if (!validationResult.IsValid)
         {
-            return Result<List<JobContext>>.Failed(validationResult.ToString());
+            return Result<TimePaginationResult<JobContext>>.Failed(validationResult.ToString());
         }
 
         foreach (var fieldAccessToken in tokens.OfType<FieldAccessToken>())
@@ -49,17 +50,21 @@ public class JobProvider : IJobProvider
             validationResult = _fieldAccessValidator.Validate(fieldAccessToken);
             if (!validationResult.IsValid)
             {
-                return Result<List<JobContext>>.Failed(validationResult.ToString());
+                return Result<TimePaginationResult<JobContext>>.Failed(validationResult.ToString());
             }
         }
 
         var expression = _expressionGenerator.GenerateExpression(tokens);
-        var jobContexts = await _jobRepository.SearchAsync(new SearchQuery()
+        var paginationQuery = new TimePaginationQuery<SearchQuery>(paginationQueryDto)
         {
-            QueryExpression = expression,
-            StartDateTimeOffset = query.StartDateTimeOffset,
-            EndDateTimeOffset = query.EndDateTimeOffset
-        });
-        return Result<List<JobContext>>.Success(jobContexts);
+            Data = new SearchQuery()
+            {
+                QueryExpression = expression,
+                StartDateTimeOffset = query.StartDateTimeOffset,
+                EndDateTimeOffset = query.EndDateTimeOffset
+            }
+        };
+        var jobContexts = await _jobRepository.SearchAsync(paginationQuery);
+        return Result<TimePaginationResult<JobContext>>.Success(jobContexts);
     }
 }

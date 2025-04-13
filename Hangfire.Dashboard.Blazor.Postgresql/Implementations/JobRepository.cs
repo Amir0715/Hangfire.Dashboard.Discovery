@@ -1,7 +1,7 @@
-using System.Linq.Expressions;
-using System.Text.Json;
+using System.ComponentModel;
 using Hangfire.Dashboard.Blazor.Core;
 using Hangfire.Dashboard.Blazor.Core.Abstractions;
+using Hangfire.Dashboard.Blazor.Core.Dtos;
 using Hangfire.Dashboard.Blazor.Postgresql.Context;
 using Hangfire.Dashboard.Blazor.Postgresql.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +18,14 @@ public class JobRepository : IJobRepository
                                      throw new ArgumentNullException(nameof(hangfirePostgresqlContext));
     }
 
-    public async Task<List<JobContext>> SearchAsync(SearchQuery query)
+    public async Task<TimePaginationResult<JobContext>> SearchAsync(TimePaginationQuery<SearchQuery> timePagination)
     {
         var schema = _hangfirePostgresqlContext.States.EntityType.GetSchema();
         var stateTable = _hangfirePostgresqlContext.States.EntityType.GetTableName();
+        var query = timePagination.Data;
         var queryExpression = query.QueryExpression;
-        var jobs = await _hangfirePostgresqlContext.Database
+
+        var q = _hangfirePostgresqlContext.Database
             .SqlQueryRaw<JobContext>(
                 $"""
                  SELECT j.id                          AS "Id",
@@ -49,9 +51,25 @@ public class JobRepository : IJobRepository
                  """)
             .Where(queryExpression)
             .Where(job => job.CreatedAt >= query.StartDateTimeOffset.UtcDateTime)
-            .WhereIf(query.EndDateTimeOffset.HasValue, job => job.CreatedAt <= query.EndDateTimeOffset!.Value.UtcDateTime)
+            .WhereIf(query.EndDateTimeOffset.HasValue,
+                job => job.CreatedAt <= query.EndDateTimeOffset!.Value.UtcDateTime);
+        
+        var jobs = await q
+            .WhereIf(timePagination is { Offset: not null, Direction: ListSortDirection.Ascending },
+                job => job.CreatedAt >= timePagination.Offset)
+            .WhereIf(timePagination is { Offset: not null, Direction: ListSortDirection.Descending },
+                job => job.CreatedAt <= timePagination.Offset)
+            .OrderByDirection(x => x.CreatedAt, timePagination.Direction)
+            .Take(timePagination.Limit)
             .ToListAsync();
 
-        return jobs;
+        var total = await q.CountAsync();
+        var nextOffset = timePagination.Direction switch
+        {
+            ListSortDirection.Ascending => jobs.MaxBy(d => d.CreatedAt)?.CreatedAt,
+            ListSortDirection.Descending => jobs.MinBy(d => d.CreatedAt)?.CreatedAt,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+        return new TimePaginationResult<JobContext>(jobs, nextOffset, timePagination.Limit, total);
     }
 }

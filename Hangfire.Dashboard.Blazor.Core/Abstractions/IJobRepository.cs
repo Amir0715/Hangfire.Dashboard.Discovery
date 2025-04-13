@@ -1,13 +1,13 @@
 using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Hangfire.Dashboard.Blazor.Core.Dtos;
 
 namespace Hangfire.Dashboard.Blazor.Core.Abstractions;
 
 public interface IJobRepository
 {
-    public Task<List<JobContext>> SearchAsync(SearchQuery query);
+    public Task<TimePaginationResult<JobContext>> SearchAsync(TimePaginationQuery<SearchQuery> query);
 }
 
 public class SearchQuery
