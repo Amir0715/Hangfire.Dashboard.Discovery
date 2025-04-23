@@ -1,0 +1,194 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JsRuntime
+
+<style>
+    .time-range-picker {
+        position: relative;
+        width: 100%;
+    }
+
+    .picker-dropdown {
+        background: #2d333b;
+        border: 1px solid #444c56;
+        border-radius: 4px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        min-width: 400px;
+
+        position: fixed;
+        transform: translateX(var(--pos-x, 0)) translateY(var(--pos-y, 0));
+        max-width: 95vw;
+        max-height: 80vh;
+    }
+
+    .tab-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .tab-button {
+        background: none;
+        border: none;
+        color: #adbac7;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    .tab-button.active {
+        background: #373e47;
+        color: #539bf5;
+    }
+
+    .date-inputs {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .submit-section {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: flex-end;
+    }
+</style>
+
+<div class="time-range-picker">
+
+    <Button OnClick="@ToggleDropdown" class="w-100">
+        <div>
+            <span>@DateTimeRange.StartDateTime.ToLocalTime().ToString("g")</span>
+            <span>-</span>
+            <span>@(DateTimeRange.EndDateTime?.ToLocalTime().ToString("g") ?? "now")</span>
+        </div>
+    </Button>
+    <div @ref="@_triggerRef">
+    </div>
+
+    @if (_isDropdownOpen)
+    {
+        <div class="picker-dropdown" style="@_dropdownStyle" @ref="@_dropdownRef">
+            <div class="tab-buttons">
+                <button class="tab-button @(_activeTab == 0 ? "active" : "")"
+                        @onclick="() => _activeTab = 0">
+                    Absolute
+                </button>
+                <button class="tab-button @(_activeTab == 1 ? "active" : "")"
+                        @onclick="() => _activeTab = 1">
+                    Relative
+                </button>
+            </div>
+
+            @if (_activeTab == 0)
+            {
+                <div class="date-inputs">
+                    <DateTimeInput Label="Start" @bind-Value="_startDateTime"/>
+                    <DateTimeInput Label="End" @bind-Value="_endDateTime"/>
+                </div>
+            }
+            else
+            {
+                <RelativeDateTimePicker @bind-RelativeStart="_relativeStart"/>
+            }
+
+            <div class="submit-section">
+                <Button OnClick="@Submit">Apply</Button>
+            </div>
+        </div>
+    }
+</div>
+<script>
+    function calculatePosition(triggerElement, dropdownElement) {
+        console.log(triggerElement);
+        console.log(dropdownElement);
+            
+        const viewportPadding = 20;
+        const triggerRect = triggerElement.getBoundingClientRect();
+        const dropdownRect = dropdownElement.getBoundingClientRect();
+        
+        // Рассчитываем доступное пространство
+        const space = {
+            right: window.innerWidth - triggerRect.right - viewportPadding,
+            left: triggerRect.left - viewportPadding,
+            bottom: window.innerHeight - triggerRect.bottom - viewportPadding,
+            top: triggerRect.top - viewportPadding
+        };
+        
+        // Рассчитываем позицию по X
+        let posX = 0;
+        if (space.right < dropdownRect.width && space.left > dropdownRect.width) {
+            posX = -dropdownRect.width;
+        }
+        
+        // Рассчитываем позицию по Y
+        let posY = triggerRect.height + 5;
+        if (space.bottom < dropdownRect.height && space.top > dropdownRect.height) {
+            posY = -dropdownRect.height - 5;
+        }
+        
+        return {
+            '--pos-x': `${posX}px`,
+            '--pos-y': `${posY}px`
+        };
+    }
+</script>
+
+@code {
+    [Parameter]
+    public DateTimeRange DateTimeRange { get; set; }
+
+    [Parameter]
+    public EventCallback<DateTimeRange> DateTimeRangeChanged { get; set; }
+
+    private bool _isDropdownOpen = false;
+    private int _activeTab = 0;
+    private DateTimeOffset? _startDateTime;
+    private DateTimeOffset? _endDateTime;
+    private DateTimeOffset? _relativeStart;
+    private ElementReference _dropdownRef;
+    private string _dropdownStyle = string.Empty;
+    private ElementReference _triggerRef;
+
+    protected override void OnInitialized()
+    {
+        _startDateTime = DateTimeRange.StartDateTime;
+        _endDateTime = DateTimeRange.EndDateTime;
+    }
+    
+    private async Task ToggleDropdown()
+    {
+        _isDropdownOpen = !_isDropdownOpen;
+        if (_isDropdownOpen)
+        {
+            await Task.Delay(10);
+            await UpdateDropdownPosition();
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (_activeTab == 1 && _relativeStart.HasValue)
+        {
+            _startDateTime = _relativeStart.Value;
+            _endDateTime = DateTimeOffset.Now;
+        }
+
+        DateTimeRange = new DateTimeRange
+        {
+            StartDateTime = _startDateTime ?? DateTimeOffset.Now,
+            EndDateTime = _endDateTime
+        };
+
+        _isDropdownOpen = false;
+        await DateTimeRangeChanged.InvokeAsync(DateTimeRange);
+    }
+    
+    private async Task UpdateDropdownPosition()
+    {
+        var position = await JsRuntime.InvokeAsync<Dictionary<string, string>>("calculatePosition", _triggerRef, _dropdownRef);
+        _dropdownStyle = string.Join(';', position.Select(kv => $"{kv.Key}:{kv.Value}"));
+    }
+}

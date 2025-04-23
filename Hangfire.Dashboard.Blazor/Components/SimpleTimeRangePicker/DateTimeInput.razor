@@ -1,0 +1,55 @@
+<style>
+    .date-time-input {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .input-field {
+        padding: 0.5rem;
+        background: #2d333b;
+        border: 1px solid #444c56;
+        border-radius: 4px;
+        color: #adbac7;
+    }
+</style>
+
+<div class="date-time-input">
+    <label>@Label</label>
+    <input type="datetime-local"
+           class="input-field"
+           value="@_localValue"
+           @onchange="@(args => HandleInput(args.Value?.ToString()))" />
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="text-danger">@_error</div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; }
+    [Parameter] public DateTimeOffset? Value { get; set; }
+    [Parameter] public EventCallback<DateTimeOffset?> ValueChanged { get; set; }
+
+    private string _localValue;
+    private string _error;
+
+    protected override void OnParametersSet()
+    {
+        _localValue = Value?.ToString("yyyy-MM-ddTHH:mm") ?? "";
+    }
+
+    private async Task HandleInput(string? newValue)
+    {
+        if (DateTimeOffset.TryParse(newValue, out var result))
+        {
+            _error = null;
+            _localValue = newValue;
+            await ValueChanged.InvokeAsync(result);
+        }
+        else
+        {
+            _error = "Invalid date format";
+        }
+    }
+}

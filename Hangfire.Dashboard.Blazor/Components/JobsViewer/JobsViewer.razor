@@ -1,5 +1,4 @@
 @using System.Text.Json
-@using Hangfire.Dashboard.Blazor.Components.TagSelector
 @using Microsoft.JSInterop
 @implements IDisposable
 
@@ -232,9 +231,7 @@
 
 <script>
     function registerScrollHandler(element, dotNetInstance) {
-        console.log("registerScrollHandler called with", element, dotNetInstance);
         let observer = new IntersectionObserver(async (entries) => {
-            console.log("intersectionObserver", entries);
             if (entries[0].isIntersecting) {
                 await dotNetInstance.invokeMethodAsync('CallLoadMoreItems');
             }
@@ -301,7 +298,6 @@
     [JSInvokable]
     public async Task CallLoadMoreItems()
     {
-        Console.WriteLine("CallLoadMoreItems");
         if (LoadMoreItems == null || _notMoreItems || _isLoadingMore || _items.Count == 0) return;
         
         _isLoadingMore = true;
@@ -310,7 +306,6 @@
         try
         {
             var moreItems = await LoadMoreItems.Invoke();
-            Console.WriteLine($"LoadMoreItems return = {moreItems.Count()} items");
             if (!moreItems.Any())
             {
                 _notMoreItems = true;

@@ -1,0 +1,48 @@
+<style>
+    .relative-picker {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .number-input {
+        width: 80px;
+        padding: 0.5rem;
+        background: #2d333b;
+        border: 1px solid #444c56;
+        border-radius: 4px;
+        color: #adbac7;
+    }
+</style>
+
+<div class="relative-picker">
+    <input type="number" 
+           class="number-input"
+           min="1"
+           @bind="_amount"
+           @bind:event="oninput" />
+    <Dropdown TItem="TimeUnit" @bind-SelectedItem="_unit" Items="@(Enum.GetValues<TimeUnit>())" />
+</div>
+
+@code {
+    [Parameter] public DateTimeOffset? RelativeStart { get; set; }
+    [Parameter] public EventCallback<DateTimeOffset?> RelativeStartChanged { get; set; }
+
+    private int _amount = 1;
+    private TimeUnit _unit = TimeUnit.Day;
+
+    private async Task UpdateRelativeStart()
+    {
+        var now = DateTimeOffset.Now;
+        var newStart = _unit switch {
+            TimeUnit.Hour => now.AddHours(-_amount),
+            TimeUnit.Day => now.AddDays(-_amount),
+            TimeUnit.Month => now.AddMonths(-_amount),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        await RelativeStartChanged.InvokeAsync(newStart);
+    }
+
+    private enum TimeUnit { Hour, Day, Month }
+}

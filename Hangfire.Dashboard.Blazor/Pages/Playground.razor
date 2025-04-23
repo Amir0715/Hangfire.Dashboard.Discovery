@@ -1,5 +1,6 @@
 @page "/hangfire/discovery/playground"
 @using System.ComponentModel
+@using Hangfire.Dashboard.Blazor.Components.SimpleTimeRangePicker
 
 <BitStack>
     <TokenSequenceValidator/>
@@ -15,10 +16,16 @@
         @bind-SelectedItem="@_selectedItem"/>
     
     <Button OnClick=@(() => Console.WriteLine("a"))>Run</Button>
+    <SimpleTimeRangePicker @bind-DateTimeRange="@_dateTimeRange"/>
 </BitStack>
 
 @code
 {
     private IEnumerable<ListSortDirection> _items = Enum.GetValues<ListSortDirection>();
     private ListSortDirection _selectedItem;
+    private DateTimeRange _dateTimeRange = new DateTimeRange()
+    {
+        StartDateTime = DateTimeOffset.UtcNow,
+        EndDateTime = null
+    };
 }

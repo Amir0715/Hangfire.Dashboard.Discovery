@@ -1,5 +1,5 @@
 <button @attributes="AdditionalAttributes"
-        class="custom-button"
+        class="@TotalClass"
         disabled="@(IsLoading || Disabled)"
         @onclick="HandleClick">
     @if (IsLoading)
@@ -84,7 +84,10 @@
     [Parameter] public bool IsLoading { get; set; }
     [Parameter] public bool Disabled { get; set; }
     [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+    [Parameter] public string? Class { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string TotalClass => $"custom-button {Class}";
 
     private async Task HandleClick(MouseEventArgs args)
     {

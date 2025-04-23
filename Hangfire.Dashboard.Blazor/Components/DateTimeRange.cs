@@ -1,4 +1,4 @@
-namespace Hangfire.Dashboard.Blazor.Components.TimeRangePicker;
+namespace Hangfire.Dashboard.Blazor.Components;
 
 public class DateTimeRange
 {

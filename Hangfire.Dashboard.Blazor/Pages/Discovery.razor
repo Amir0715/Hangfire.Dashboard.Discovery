@@ -4,6 +4,7 @@
 @using Hangfire.Dashboard.Blazor.Core.Dtos
 @using Hangfire.Dashboard.Blazor.Core.Validators
 @using Hangfire.Dashboard.Blazor.Components.TagSelector
+@using Hangfire.Dashboard.Blazor.Components.SimpleTimeRangePicker
 
 <style>
     .toolbar {
@@ -18,7 +19,7 @@
     <div class="d-flex gap-1 toolbar">
         <QueryInput Class="flex-shrink-1 flex-grow-0" @bind-Query="@_timePaginationQuery.Data.QueryString"/>
         <div style="min-width: 250px;">
-            <TimeRangePicker @bind-DateTimeRange="@_dateTimeRange"/>
+            <SimpleTimeRangePicker @bind-DateTimeRange="@_dateTimeRange"/>
         </div>
         <Button OnClick="SearchJobsAsync" IsLoading="@_isLoading">Run</Button>
     </div>
