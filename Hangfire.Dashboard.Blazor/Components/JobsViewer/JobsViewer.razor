@@ -62,13 +62,6 @@
         color: rgb(var(--state-color));
     }
 
-    .param-selector {
-        background: #2d333b;
-        border: 1px solid #444c56;
-        border-radius: 6px;
-        padding: 0.5rem;
-    }
-
     .json-preview {
         background: #1e2228;
         border: 1px solid #444c56;
@@ -165,12 +158,6 @@
     }
 </style>
 
-<!-- В секции параметров -->
-<div class="param-selector">
-    <TagSelector Items="@AllParams"
-                 SelectedItems="@SelectedParams"
-                 SelectedItemsChanged="@(tags => SelectedParams = tags)"/>
-</div>
 <div class="jobs">
     @foreach (var job in _items)
     {
@@ -262,20 +249,20 @@
 </script>
 
 @code {
-
     [Parameter]
     public IEnumerable<JobContext> Items { get; set; }
 
-    private List<JobContext> _items;
+    private List<JobContext> _items = [];
 
     [Parameter]
     public Func<Task<IEnumerable<JobContext>>> LoadMoreItems { get; set; }
 
+    [Parameter]
+    public ICollection<string> ShowJobParams { get; set; } = [];
+    
     [Inject]
     public IJSRuntime JsRuntime { get; set; }
     
-    private List<string> AllParams { get; set; } = [];
-    private List<string> SelectedParams { get; set; } = [];
     private Dictionary<long, bool> _expandedJobs = new();
     private ElementReference _intersectionObserverTargetElement;
     private bool _isLoadingMore;
@@ -284,7 +271,6 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        UpdateAvailableParams();
         if (Items == null && LoadMoreItems != null)
         {
             Items = await LoadMoreItems.Invoke();
@@ -331,7 +317,6 @@
                 return;
             }
             _items.AddRange(moreItems);
-            UpdateAvailableParams();
         }
         finally
         {
@@ -340,19 +325,10 @@
         }
     }
 
-    private void UpdateAvailableParams()
-    {
-        AllParams = _items
-            .SelectMany(j => j.Params.RootElement.EnumerateObject().Select(p => p.Name))
-            .Distinct()
-            .OrderBy(p => p)
-            .ToList();
-    }
-
     private IEnumerable<KeyValuePair<string, JsonElement>> GetVisibleParams(JobContext job)
     {
         return job.Params.RootElement.EnumerateObject()
-            .Where(p => SelectedParams.Contains(p.Name))
+            .Where(p => ShowJobParams.Contains(p.Name))
             .ToDictionary(x => x.Name, v => v.Value);
     }
 

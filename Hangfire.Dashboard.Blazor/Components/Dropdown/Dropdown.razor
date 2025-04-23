@@ -1,0 +1,61 @@
+@typeparam TItem
+
+<div class="custom-select">
+    <select @bind="SelectedItem" 
+            @bind:event="onchange"
+            class="select-element">
+        @foreach (var item in Items)
+        {
+            <option value="@item">
+                @if (ItemTemplate != null)
+                {
+                    @ItemTemplate(item)
+                }
+                else
+                {
+                    @item?.ToString()
+                }
+            </option>
+        }
+    </select>
+    <span class="select-arrow">▼</span>
+</div>
+
+<style>
+    .custom-select {
+        position: relative;
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .select-element {
+        width: 100%;
+        padding: 0.5rem 1rem;
+        background: #2d333b;
+        border: 1px solid #444c56;
+        border-radius: 4px;
+        color: #adbac7;
+        appearance: none;
+        cursor: pointer;
+    }
+
+    .select-element:hover {
+        border-color: #539bf5;
+    }
+
+    .select-arrow {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        font-size: 0.8em;
+    }
+</style>
+
+@code {
+    [Parameter] public IEnumerable<TItem> Items { get; set; } = new List<TItem>();
+    [Parameter] public TItem? SelectedItem { get; set; }
+    [Parameter] public EventCallback<TItem> SelectedItemChanged { get; set; }
+    [Parameter] public RenderFragment<TItem>? ItemTemplate { get; set; }
+}

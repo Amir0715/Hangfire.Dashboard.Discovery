@@ -1,11 +1,24 @@
 @page "/hangfire/discovery/playground"
+@using System.ComponentModel
 
 <BitStack>
-    <TokenSequenceValidator />
-    
+    <TokenSequenceValidator/>
+
     <BitCard>
         <TimeRangePicker></TimeRangePicker>
     </BitCard>
+
+    <QueryInput/>
+
+    <Dropdown
+        Items="@_items"
+        @bind-SelectedItem="@_selectedItem"/>
     
-    <QueryInput />
+    <Button OnClick=@(() => Console.WriteLine("a"))>Run</Button>
 </BitStack>
+
+@code
+{
+    private IEnumerable<ListSortDirection> _items = Enum.GetValues<ListSortDirection>();
+    private ListSortDirection _selectedItem;
+}

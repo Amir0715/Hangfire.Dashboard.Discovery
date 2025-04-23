@@ -1,4 +1,11 @@
 <div class="tag-selector">
+    <input type="text" 
+           class="tag-input"
+           placeholder="@Placeholder"
+           @oninput="@(e => SearchText = e.Value?.ToString())"
+           @onfocus="@(() => _showDropdown = true)"
+           @onblur="@HideDropdown"/>
+    
     <div class="selected-tags">
         @foreach (var tag in SelectedItems)
         {
@@ -9,16 +16,13 @@
         }
     </div>
     
-    <input type="text" 
-           class="tag-input"
-           placeholder="Выберите параметры..."
-           @oninput="@(e => SearchText = e.Value?.ToString())"
-           @onfocus="@(() => _showDropdown = true)"
-           @onblur="@HideDropdown"/>
-    
     @if (_showDropdown)
     {
         <div class="tag-dropdown">
+            @if (FilteredTags.Count == 0)
+            {
+                <div class="dropdown-item">@NoItemsPlaceholder</div>
+            }
             @foreach (var tag in FilteredTags)
             {
                 <div class="dropdown-item"
@@ -41,7 +45,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
-        margin-bottom: 0.5rem;
+        margin-top: 0.5rem;
     }
 
     .tag {
@@ -98,13 +102,19 @@
 
 @code {
     [Parameter]
-    public List<string> Items { get; set; } = new();
+    public IEnumerable<string> Items { get; set; } = [];
 
     [Parameter]
-    public List<string> SelectedItems { get; set; } = new();
+    public ICollection<string> SelectedItems { get; set; } = [];
 
     [Parameter]
-    public EventCallback<List<string>> SelectedItemsChanged { get; set; }
+    public EventCallback<ICollection<string>> SelectedItemsChanged { get; set; }
+
+    [Parameter]
+    public string NoItemsPlaceholder { get; set; } = "No items";
+    
+    [Parameter]
+    public string Placeholder { get; set; } = "Select...";
 
     private string SearchText { get; set; } = string.Empty;
     private bool _showDropdown = false;
