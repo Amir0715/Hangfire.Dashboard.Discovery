@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace Hangfire.Dashboard.Blazor.Core.Models;
+namespace Hangfire.Dashboard.Blazor.Postgresql.Models;
 
 public class Job
 {
@@ -10,7 +10,7 @@ public class Job
 
     public Invocation Invocation { get; set; } = null!;
 
-    public JsonDocument Arguments { get; set; } = null!;
+    public JsonDocument? Arguments { get; set; } = null!;
 
     public DateTime Createdat { get; set; }
 

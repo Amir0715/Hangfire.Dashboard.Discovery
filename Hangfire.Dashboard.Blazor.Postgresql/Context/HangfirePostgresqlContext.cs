@@ -1,5 +1,4 @@
-﻿using Hangfire.Dashboard.Blazor.Core.Models;
-using Hangfire.Dashboard.Blazor.Postgresql.Models;
+﻿using Hangfire.Dashboard.Blazor.Postgresql.Models;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -19,6 +18,7 @@ public partial class HangfirePostgresqlContext : DbContext
     public virtual DbSet<Jobqueue> Jobqueues { get; set; }
 
     public virtual DbSet<State> States { get; set; }
+    public virtual DbSet<JobInfo> JobInfos { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,7 +37,9 @@ public partial class HangfirePostgresqlContext : DbContext
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Arguments)
                 .HasColumnType("jsonb")
-                .HasColumnName("arguments");
+                .HasColumnName("job_args")
+                .IsRequired(false);
+            
             entity.Property(e => e.Createdat).HasColumnName("createdat");
             entity.Property(e => e.Expireat).HasColumnName("expireat");
             entity.Property(e => e.Invocation)
@@ -106,6 +108,15 @@ public partial class HangfirePostgresqlContext : DbContext
                 .HasColumnName("updatecount");
         });
 
+        modelBuilder.Entity<JobInfo>(entity =>
+        {
+            entity.ToTable("job_info", "hangfire");
+            entity.HasKey(x => new { x.JobType, x.JobMethod }).HasName("job_info_pkey");
+            entity.Property(x => x.Args).HasColumnName("job_args").HasColumnType("jsonb");
+            entity.Property(x => x.JobMethod).HasColumnName("job_method");
+            entity.Property(x => x.JobType).HasColumnName("job_type");
+        });
+        
         OnModelCreatingPartial(modelBuilder);
     }
 

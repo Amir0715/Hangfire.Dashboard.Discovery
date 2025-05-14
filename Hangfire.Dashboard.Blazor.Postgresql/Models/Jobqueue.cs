@@ -1,4 +1,4 @@
-﻿namespace Hangfire.Dashboard.Blazor.Core.Models;
+﻿namespace Hangfire.Dashboard.Blazor.Postgresql.Models;
 
 public class Jobqueue
 {

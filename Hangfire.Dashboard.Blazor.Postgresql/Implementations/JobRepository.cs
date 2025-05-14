@@ -20,6 +20,7 @@ public class JobRepository : IJobRepository
 
     public async Task<TimePaginationResult<JobContext>> SearchAsync(TimePaginationQuery<SearchQuery> timePagination)
     {
+        // Подсказка значений State
         var schema = _hangfirePostgresqlContext.States.EntityType.GetSchema();
         var stateTable = _hangfirePostgresqlContext.States.EntityType.GetTableName();
         var query = timePagination.Data;
@@ -43,7 +44,7 @@ public class JobRepository : IJobRepository
                         (SELECT jsonb_object_agg(name, btrim(value, '" ')) AS params_json
                          FROM {schema}.jobparameter
                          WHERE jobId = j.id) as "Params",
-                        ((SELECT queue from {schema}.jobqueue where jobid = j.id LIMIT 1)
+                        ((SELECT queue from {schema}.jobqueue where jobid = j.id order by createdat desc LIMIT 1)
                         UNION
                         (SELECT 'default')
                         LIMIT 1)                     as "Queue"

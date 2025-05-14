@@ -4,6 +4,7 @@ using Hangfire.Dashboard.Blazor.Postgresql.Implementations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace Hangfire.Dashboard.Blazor.Postgresql;
 
@@ -13,10 +14,13 @@ public static class DependencyInjection
     {
         // TODO: Надо переиспользовать коннекшен от DataSource
         // TODO: Вытащить схему из конфигурации hangfire postgresql
+        
         services.AddScoped<IJobRepository, JobRepository>();
         services.AddDbContext<HangfirePostgresqlContext>(options =>
         {
-            options.UseNpgsql(configuration.GetConnectionString("hangfire"));
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(configuration.GetConnectionString("hangfire"));
+            dataSourceBuilder.EnableDynamicJson();
+            options.UseNpgsql(dataSourceBuilder.Build());
         });
 
         return services;

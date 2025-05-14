@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using Hangfire.Dashboard.Blazor.Core.Models;
 
 namespace Hangfire.Dashboard.Blazor.Postgresql.Models;
 
