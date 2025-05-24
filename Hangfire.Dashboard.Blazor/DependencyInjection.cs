@@ -35,11 +35,6 @@ public static class DependencyInjection
             .MapRazorComponents<App>()
             .AddInteractiveServerRenderMode()
             .DisableAntiforgery();
-        using (var scope = endpointRouteBuilder.ServiceProvider.CreateScope())
-        {
-            var recurringJobManager = scope.ServiceProvider.GetService<IRecurringJobManagerV2>();
-            recurringJobManager.AddOrUpdate<JobArgumentInfoUpdateRecurrentJob>(nameof(JobArgumentInfoUpdateRecurrentJob), x => x.ExecuteAsync(default), Cron.Minutely);
-        }
         
         return endpointRouteBuilder;
     }

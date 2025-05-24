@@ -12,6 +12,7 @@ var hangfireConnectionString = builder.Configuration.GetConnectionString("hangfi
 builder.Services.AddHangfire(c => c
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
+    .UseBlazorDiscoveryPanel()
     .UsePostgreSqlStorage(opt => opt.UseNpgsqlConnection(hangfireConnectionString),
         new PostgreSqlStorageOptions
         {

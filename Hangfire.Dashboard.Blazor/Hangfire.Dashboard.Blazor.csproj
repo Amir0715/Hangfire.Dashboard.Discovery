@@ -6,30 +6,49 @@
         <TargetFramework>net8.0</TargetFramework>
         <LangVersion>default</LangVersion>
     </PropertyGroup>
-    
+
     <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
         <SupportedPlatform Include="browser"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Bit.BlazorUI" Version="9.5.1" />
-        <PackageReference Include="Bit.BlazorUI.Extras" Version="9.5.1" />
-        <PackageReference Include="Bit.BlazorUI.Icons" Version="9.5.1" />
-        <PackageReference Include="BlazorMonaco" Version="3.3.0" />
-        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.13" />
+        <PackageReference Include="Bit.BlazorUI" Version="9.5.1"/>
+        <PackageReference Include="Bit.BlazorUI.Extras" Version="9.5.1"/>
+        <PackageReference Include="Bit.BlazorUI.Icons" Version="9.5.1"/>
+        <PackageReference Include="BlazorMonaco" Version="3.3.0"/>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.13"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Hangfire.Dashboard.Blazor.Core\Hangfire.Dashboard.Blazor.Core.csproj" />
-      <ProjectReference Include="..\Hangfire.Dashboard.Blazor.Postgresql\Hangfire.Dashboard.Blazor.Postgresql.csproj" />
+        <PackageReference Include="RazorGenerator.MsBuild" Version="2.5.0" GeneratePathProperty="true">
+            <PrivateAssets>all</PrivateAssets>
+            <ExcludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</ExcludeAssets>
+        </PackageReference>
     </ItemGroup>
     
     <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <ProjectReference Include="..\Hangfire.Dashboard.Blazor.Core\Hangfire.Dashboard.Blazor.Core.csproj"/>
+        <ProjectReference Include="..\Hangfire.Dashboard.Blazor.Postgresql\Hangfire.Dashboard.Blazor.Postgresql.csproj"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-      <Folder Include="wwwroot\lib\" />
+        <Folder Include="wwwroot\lib\"/>
     </ItemGroup>
+
+    <!-- Full MSBuild is required to generate Razor classes -->
+    <PropertyGroup>
+        <MSBuild14FullPath>$(MSBuildProgramFiles32)\..\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe</MSBuild14FullPath>
+        <MSBuildCurrentFullPath>$(MSBuildBinPath)\MSBuild.exe</MSBuildCurrentFullPath>
+        <RazorProjectFile>Razor.build</RazorProjectFile>
+        <InnerTargets>GenerateRazorClasses;Build</InnerTargets>
+    </PropertyGroup>
+
+    <Target Name="GenerateRazorClasses" BeforeTargets="Build">
+        <Message Text="MSBuildCurrentFullPath $(MSBuildCurrentFullPath)" Importance="high" />
+        <Exec Command="&quot;$(MSBuildCurrentFullPath)&quot; $(RazorProjectFile) /p:PkgRazorGenerator_MsBuild=&quot;$(PkgRazorGenerator_MsBuild)&quot;" Condition="Exists('$(MSBuildCurrentFullPath)')" />
+        <Exec Command="&quot;$(MSBuild14FullPath)&quot; $(RazorProjectFile) /p:PkgRazorGenerator_MsBuild=&quot;$(PkgRazorGenerator_MsBuild)&quot;" Condition="Exists('$(MSBuild14FullPath)') and !Exists('$(MSBuildCurrentFullPath)')" />
+        <Warning Text="Classes for Razor files (*.cshtml) weren't re-generated: couldn't find the '$(MSBuild14FullPath)' or '$(MSBuildCurrentFullPath)' file" Condition="!Exists('$(MSBuild14FullPath)') and !Exists('$(MSBuildCurrentFullPath)')" />
+    </Target>
 </Project>
