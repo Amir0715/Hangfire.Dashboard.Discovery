@@ -399,4 +399,189 @@ public class ExpressionGeneratorTests
         Assert.Equal(jobs.Count(expectedExpression.Compile()), actual.Count);
         Assert.True(actual.All(expectedExpression.Compile()));
     }
+    
+    [Fact]
+    public void GenerateExpression_DateTimeOffset_Valid1()
+    {
+        var targetDateTime = DateTimeOffset.Now;
+        Expression<Func<JobContext, bool>> expectedExpression = 
+            job => job.CreatedAt >= targetDateTime;
+        var tokens = new TokenListBuilder()
+            .FieldAccess("CreatedAt")
+            .GreaterOrEqual(targetDateTime);
+        
+        var expressionGenerator = new ExpressionGenerator();
+
+        List<JobContext> jobs =
+        [
+            new()
+            {
+                CreatedAt = DateTimeOffset.Now.AddDays(-1)
+            },
+            new()
+            {
+                CreatedAt = DateTimeOffset.Now.AddDays(1)
+            },
+            new()
+            {
+                CreatedAt = DateTimeOffset.Now.AddDays(-1)
+            }
+        ];
+        
+        var actualExpression = expressionGenerator.GenerateExpression(tokens);
+        _testOutputHelper.WriteLine(actualExpression.ToString());
+        
+        var actual = jobs.AsQueryable().Where(actualExpression).ToList();
+        Assert.Equal(jobs.Count(expectedExpression.Compile()), actual.Count);
+        Assert.True(actual.All(expectedExpression.Compile()));
+    }
+    
+    [Fact]
+    public void GenerateExpression_DateTimeOffset_Valid2()
+    {
+        var targetDateTime = DateTimeOffset.Parse("2025-05-29T12:00:00Z");
+        Expression<Func<JobContext, bool>> expectedExpression = 
+            job => job.CreatedAt == targetDateTime;
+        var tokens = new TokenListBuilder()
+            .FieldAccess("CreatedAt")
+            .Equal(targetDateTime);
+        
+        var expressionGenerator = new ExpressionGenerator();
+
+        List<JobContext> jobs =
+        [
+            new()
+            {
+                CreatedAt = DateTimeOffset.Parse("2025-05-29T12:00:00Z")
+            },
+            new()
+            {
+                CreatedAt = DateTimeOffset.Parse("2025-05-29T12:00:00+3:00")
+            },
+            new()
+            {
+                CreatedAt = DateTimeOffset.Parse("2025-05-29T00:00:00Z")
+            }
+        ];
+        
+        var actualExpression = expressionGenerator.GenerateExpression(tokens);
+        _testOutputHelper.WriteLine(actualExpression.ToString());
+        
+        var actual = jobs.AsQueryable().Where(actualExpression).ToList();
+        Assert.Equal(jobs.Count(expectedExpression.Compile()), actual.Count);
+        Assert.True(actual.All(expectedExpression.Compile()));
+    }
+    
+    
+    [Fact]
+    public void GenerateExpression_DateTimeOffset_Valid3()
+    {
+        var targetDateTime = DateTimeOffset.Parse("2025-05-29T13:00:00Z");
+        Expression<Func<JobContext, bool>> expectedExpression = 
+            job => job.CreatedAt < targetDateTime;
+        var tokens = new TokenListBuilder()
+            .FieldAccess("CreatedAt")
+            .Less(targetDateTime);
+        
+        var expressionGenerator = new ExpressionGenerator();
+
+        List<JobContext> jobs =
+        [
+            new()
+            {
+                CreatedAt = DateTimeOffset.Parse("2025-05-29T12:00:00Z")
+            },
+            new()
+            {
+                CreatedAt = DateTimeOffset.Parse("2025-05-29T12:00:00+3:00")
+            },
+            new()
+            {
+                CreatedAt = DateTimeOffset.Parse("2025-05-29T00:00:00Z")
+            }
+        ];
+        
+        var actualExpression = expressionGenerator.GenerateExpression(tokens);
+        _testOutputHelper.WriteLine(actualExpression.ToString());
+        
+        var actual = jobs.AsQueryable().Where(actualExpression).ToList();
+        Assert.Equal(jobs.Count(expectedExpression.Compile()), actual.Count);
+        Assert.True(actual.All(expectedExpression.Compile()));
+    }
+    
+    [Fact]
+    public void GenerateExpression_DateTimeOffset_InJsonDocument_Valid()
+    {
+        var targetDateTime = DateTimeOffset.Parse("2025-05-28T13:00:00Z");
+        Expression<Func<JobContext, bool>> expectedExpression = 
+            job => job.Args.RootElement.GetProperty("CreatedAt").GetDateTimeOffset() > targetDateTime;
+        var tokens = new TokenListBuilder()
+            .FieldAccess("Args.CreatedAt")
+            .Greater(targetDateTime);
+        
+        var expressionGenerator = new ExpressionGenerator();
+
+        var correctJsonDocument = """{"CreatedAt":"2025-05-29T12:00:00Z"}""";
+        var incorrectJsonDocument = """{"CreatedAt":"2025-05-23T12:00:00Z"}""";
+        List<JobContext> jobs =
+        [
+            new()
+            {
+                Args = JsonDocument.Parse(correctJsonDocument)
+            },
+            new()
+            {
+                Args = JsonDocument.Parse(incorrectJsonDocument)
+            },
+            new()
+            {
+                Args = JsonDocument.Parse(correctJsonDocument)
+            }
+        ];
+        
+        var actualExpression = expressionGenerator.GenerateExpression(tokens);
+        _testOutputHelper.WriteLine(actualExpression.ToString());
+        
+        var actual = jobs.AsQueryable().Where(actualExpression).ToList();
+        Assert.Equal(jobs.Count(expectedExpression.Compile()), actual.Count);
+        Assert.True(actual.All(expectedExpression.Compile()));
+    }
+    
+    [Fact]
+    public void GenerateExpression_DateTimeOffset_InJsonDocument_Valid2()
+    {
+        var targetDateTime = DateTimeOffset.Parse("2025-05-28T13:00:00Z");
+        Expression<Func<JobContext, bool>> expectedExpression = 
+            job => job.Args.RootElement.GetProperty("CreatedAt").GetDateTimeOffset() < targetDateTime;
+        var tokens = new TokenListBuilder()
+            .FieldAccess("Args.CreatedAt")
+            .Less(targetDateTime);
+        
+        var expressionGenerator = new ExpressionGenerator();
+
+        var correctJsonDocument = """{"CreatedAt":"2025-05-29T12:00:00Z"}""";
+        var incorrectJsonDocument = """{"CreatedAt":"2025-05-23T12:00:00Z"}""";
+        List<JobContext> jobs =
+        [
+            new()
+            {
+                Args = JsonDocument.Parse(correctJsonDocument)
+            },
+            new()
+            {
+                Args = JsonDocument.Parse(incorrectJsonDocument)
+            },
+            new()
+            {
+                Args = JsonDocument.Parse(correctJsonDocument)
+            }
+        ];
+        
+        var actualExpression = expressionGenerator.GenerateExpression(tokens);
+        _testOutputHelper.WriteLine(actualExpression.ToString());
+        
+        var actual = jobs.AsQueryable().Where(actualExpression).ToList();
+        Assert.Equal(jobs.Count(expectedExpression.Compile()), actual.Count);
+        Assert.True(actual.All(expectedExpression.Compile()));
+    }
 }

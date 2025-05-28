@@ -32,6 +32,9 @@ public class ExpressionGenerator : IExpressionGenerator
                 case (null, StringToken constantToken):
                     currentExpression = Expression.Constant(constantToken.Value);
                     break;
+                case (null, DateTimeOffsetToken constantToken):
+                    currentExpression = Expression.Constant(constantToken.Value);
+                    break;
                 case (null, NumberToken constantToken):
                     currentExpression = Expression.Constant(constantToken.Value);
                     break;
@@ -50,6 +53,10 @@ public class ExpressionGenerator : IExpressionGenerator
                     currentExpression = GenerateExpression(tokenEnumerator, jobParameter);
                     break;
                 case ({ } operatorToken, StringToken constantToken):
+                    currentExpression = BinaryExpression(currentExpression!, operatorToken, constantToken);
+                    lastOperatorToken = null;
+                    break;
+                case ({ } operatorToken, DateTimeOffsetToken constantToken):
                     currentExpression = BinaryExpression(currentExpression!, operatorToken, constantToken);
                     lastOperatorToken = null;
                     break;
@@ -96,13 +103,13 @@ public class ExpressionGenerator : IExpressionGenerator
                     lastOperatorToken = operatorToken;
                     break;
 
-                case ({ }, StringToken constantToken):
+                case (not null, StringToken constantToken):
                     return BinaryExpression(prevExpression, lastOperatorToken, constantToken);
 
-                case ({ }, NumberToken constantToken):
+                case (not null, NumberToken constantToken):
                     return BinaryExpression(prevExpression, lastOperatorToken, constantToken);
 
-                case ({ }, FieldAccessToken fat):
+                case (not null, FieldAccessToken fat):
                     return BinaryExpression(prevExpression, lastOperatorToken, Access(jobParameter, fat));
             }
         }
@@ -162,6 +169,15 @@ public class ExpressionGenerator : IExpressionGenerator
     {
         return BinaryExpression(left, operatorToken, Expression.Constant(numberToken.Value));
     }
+    
+    private static Expression BinaryExpression(
+        Expression left,
+        OperatorToken operatorToken,
+        DateTimeOffsetToken numberToken
+    )
+    {
+        return BinaryExpression(left, operatorToken, Expression.Constant(numberToken.Value));
+    }
 
     private static Expression BinaryExpression(
         Expression left,
@@ -175,12 +191,22 @@ public class ExpressionGenerator : IExpressionGenerator
         } else if (right.Type == typeof(float) && left.Type == typeof(JsonElement))
         {
             left = Expression.Call(left, nameof(JsonElement.GetSingle), []);
-        } else if (left.Type == typeof(string) && right.Type == typeof(JsonElement))
+        } 
+        
+        if (left.Type == typeof(string) && right.Type == typeof(JsonElement))
         {
             right = Expression.Call(right, nameof(JsonElement.GetString), []);
         } else if (right.Type == typeof(string) && left.Type == typeof(JsonElement))
         {
             left = Expression.Call(left, nameof(JsonElement.GetString), []);
+        }
+        
+        if (left.Type == typeof(DateTimeOffset) && right.Type == typeof(JsonElement))
+        {
+            right = Expression.Call(right, nameof(JsonElement.GetDateTimeOffset), []);
+        } else if (right.Type == typeof(DateTimeOffset) && left.Type == typeof(JsonElement))
+        {
+            left = Expression.Call(left, nameof(JsonElement.GetDateTimeOffset), []);
         }
         
         return operatorToken.Operator switch

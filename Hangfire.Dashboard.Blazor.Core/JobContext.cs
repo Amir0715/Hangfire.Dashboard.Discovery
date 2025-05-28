@@ -15,8 +15,7 @@ public class JobContext : IDisposable
     public JsonDocument Params { get; set; }
     public JsonDocument? StateData { get; set; }
     
-    public DateTime CreatedAt { get; set; }
-    public DateTime? ExpireAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
     
     public string JobName => $"{Type.Split(',')[0]}.{Method}";
 
