@@ -2,18 +2,17 @@ using System;
 
 namespace Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 
-public class ConstantToken : Token, IEquatable<ConstantToken>
+public class StringToken : Token, IEquatable<StringToken>
 {
-    public ConstantToken(string value)
+    public StringToken(string value)
     {
         Value = value;
     }
 
-    public override TokenType Type => TokenType.Constant;
+    public override TokenType Type => TokenType.String;
     public string Value { get; }
     
-
-    public bool Equals(ConstantToken? other)
+    public bool Equals(StringToken? other)
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
@@ -25,7 +24,7 @@ public class ConstantToken : Token, IEquatable<ConstantToken>
         if (obj is null) return false;
         if (ReferenceEquals(this, obj)) return true;
         if (obj.GetType() != GetType()) return false;
-        return Equals((ConstantToken)obj);
+        return Equals((StringToken)obj);
     }
 
     public override int GetHashCode()

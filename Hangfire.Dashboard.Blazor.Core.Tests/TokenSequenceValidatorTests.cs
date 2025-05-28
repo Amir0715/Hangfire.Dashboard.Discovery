@@ -43,15 +43,15 @@ public class TokenSequenceValidatorTests
         new object[] { new TokenListBuilder().Close().GreaterOrEqual().Open(), false },
         new object[] { new TokenListBuilder().Open().GreaterOrEqual().Close(), false },
 
-        new object[] { new TokenListBuilder().Constant("test"), false },
-        new object[] { new TokenListBuilder().Close().Constant("test").Open(), false },
-        new object[] { new TokenListBuilder().Open().Constant("test").Close(), false },
+        new object[] { new TokenListBuilder().String("test"), false },
+        new object[] { new TokenListBuilder().Close().String("test").Open(), false },
+        new object[] { new TokenListBuilder().Open().String("test").Close(), false },
 
-        new object[] { new TokenListBuilder().Constant("job.type"), false },
-        new object[] { new TokenListBuilder().Constant("job.type()"), false },
-        new object[] { new TokenListBuilder().Constant("(job)"), false },
+        new object[] { new TokenListBuilder().String("job.type"), false },
+        new object[] { new TokenListBuilder().String("job.type()"), false },
+        new object[] { new TokenListBuilder().String("(job)"), false },
 
-        new object[] { new TokenListBuilder().Constant("(job)"), false },
+        new object[] { new TokenListBuilder().String("(job)"), false },
 
         new object[] { new TokenListBuilder().FieldAccess("job.name"), false },
         new object[] { new TokenListBuilder().Close().FieldAccess("job.name").Open(), false },
@@ -62,60 +62,60 @@ public class TokenSequenceValidatorTests
         new object[] { new TokenListBuilder().FieldAccess("(job.name)"), false },
 
         // Положительные кейсы
-        new object[] { new TokenListBuilder().FieldAccess("a").Equal().Constant("b"), true },
-        new object[] { new TokenListBuilder().Open().FieldAccess("a").Equal().Constant("b").Close(), true },
+        new object[] { new TokenListBuilder().FieldAccess("a").Equal().String("b"), true },
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").Equal().String("b").Close(), true },
         new object[]
         {
             new TokenListBuilder()
-                .Open().FieldAccess("a").Equal().Constant("b").Close()
+                .Open().FieldAccess("a").Equal().String("b").Close()
                 .And()
-                .Open().Constant("c").Like().Constant("d").Close(),
+                .Open().String("c").Like().String("d").Close(),
             true
         },
         new object[]
         {
             new TokenListBuilder()
-                .FieldAccess("x").Greater().Constant("10")
+                .FieldAccess("x").Greater().String("10")
                 .Or()
-                .FieldAccess("y").LessOrEqual().Constant("20"),
+                .FieldAccess("y").LessOrEqual().String("20"),
             true
         },
         new object[]
         {
             new TokenListBuilder()
-                .Open().Open().FieldAccess("a").NotEqual().Constant("b").Close().Close()
+                .Open().Open().FieldAccess("a").NotEqual().String("b").Close().Close()
                 .Or()
-                .FieldAccess("c").Like().Constant("d"),
+                .FieldAccess("c").Like().String("d"),
             true
         },
 
         // Отрицательные кейсы
         // Неправильные скобочные структуры
-        new object[] { new TokenListBuilder().Open().FieldAccess("a").Equal().Constant("b"), false },
-        new object[] { new TokenListBuilder().FieldAccess("a").Equal().Constant("b").Close(), false },
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").Equal().String("b"), false },
+        new object[] { new TokenListBuilder().FieldAccess("a").Equal().String("b").Close(), false },
 
         // Неправильное расположение операторов
-        new object[] { new TokenListBuilder().Equal().FieldAccess("a").Constant("b"), false },
-        new object[] { new TokenListBuilder().FieldAccess("a").Constant("b").Equal(), false },
-        new object[] { new TokenListBuilder().And().FieldAccess("a").Equal().Constant("b"), false },
+        new object[] { new TokenListBuilder().Equal().FieldAccess("a").String("b"), false },
+        new object[] { new TokenListBuilder().FieldAccess("a").String("b").Equal(), false },
+        new object[] { new TokenListBuilder().And().FieldAccess("a").Equal().String("b"), false },
 
         // Дублированные операнды
         new object[] { new TokenListBuilder().FieldAccess("a").FieldAccess("b"), false },
-        new object[] { new TokenListBuilder().Constant("a").Constant("b"), false },
+        new object[] { new TokenListBuilder().String("a").String("b"), false },
 
         new object[]
         {
             new TokenListBuilder()
-                .FieldAccess("a").Equal().Constant("b")
+                .FieldAccess("a").Equal().String("b")
                 .And()
-                .FieldAccess("c").Equal().Constant("d"),
+                .FieldAccess("c").Equal().String("d"),
             true
         },
         new object[]
         {
             new TokenListBuilder()
-                .Open().FieldAccess("a").Equal().Constant("b").Close()
-                .Open().FieldAccess("c").Equal().Constant("d").Close(),
+                .Open().FieldAccess("a").Equal().String("b").Close()
+                .Open().FieldAccess("c").Equal().String("d").Close(),
             false // Нет оператора между скобками
         },
 
@@ -127,17 +127,17 @@ public class TokenSequenceValidatorTests
         new object[]
         {
             new TokenListBuilder()
-                .FieldAccess("a").Equal().Constant("b")
-                .Or().FieldAccess("c").Equal().Constant("d")
-                .And().FieldAccess("e").Equal().Constant("f"),
+                .FieldAccess("a").Equal().String("b")
+                .Or().FieldAccess("c").Equal().String("d")
+                .And().FieldAccess("e").Equal().String("f"),
             true
         },
         new object[]
         {
             new TokenListBuilder()
-                .FieldAccess("a").Equal().Constant("b")
-                .Or().Open().FieldAccess("c").Equal().Constant("d")
-                .And().FieldAccess("e").Equal().Constant("f").Close(),
+                .FieldAccess("a").Equal().String("b")
+                .Or().Open().FieldAccess("c").Equal().String("d")
+                .And().FieldAccess("e").Equal().String("f").Close(),
             true 
         },
 
@@ -149,25 +149,25 @@ public class TokenSequenceValidatorTests
         },
         new object[]
         {
-            new TokenListBuilder().Constant("a").And().Constant("b"), false
+            new TokenListBuilder().String("a").And().String("b"), false
         },
         new object[]
         {
-            new TokenListBuilder().FieldAccess("a").And().Constant("b"), false
+            new TokenListBuilder().FieldAccess("a").And().String("b"), false
         },
         new object[]
         {
-            new TokenListBuilder().FieldAccess("a").Equal().Constant("d").And().Constant("b"), false
+            new TokenListBuilder().FieldAccess("a").Equal().String("d").And().String("b"), false
         },
         new object[]
         {
-            new TokenListBuilder().FieldAccess("a").Equal().Constant("d").And().FieldAccess("b"), false
+            new TokenListBuilder().FieldAccess("a").Equal().String("d").And().FieldAccess("b"), false
         },
         new object[]
         {
             new TokenListBuilder()
-                .Open().FieldAccess("a").Equal().Constant("b")
-                .Or().FieldAccess("c").Equal().Constant("d").Close(),
+                .Open().FieldAccess("a").Equal().String("b")
+                .Or().FieldAccess("c").Equal().String("d").Close(),
             true
         }
     };

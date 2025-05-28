@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using Hangfire.Dashboard.Blazor.Core.Abstractions;
 using Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 
@@ -26,8 +27,8 @@ start:
                     AddWordAndClear(tokens, word);
                     break;
                 case (_, ')') when !quotationOpenIsMet:
-                    tokens.Add(new ParenToken(ParenType.Close));
                     AddWordAndClear(tokens, word);
+                    tokens.Add(new ParenToken(ParenType.Close));
                     break;
                 case ('=', '=') when !quotationOpenIsMet:
                     tokens.Add(new OperatorToken(OperatorType.Equal));
@@ -115,13 +116,22 @@ start:
         var wordString = string.Join(null, word).Trim();
         if (string.IsNullOrWhiteSpace(wordString)) return;
         
-        tokens.Add(new FieldAccessToken(wordString));
+        // Проверяем, является ли токен числом
+        if (float.TryParse(wordString, CultureInfo.InvariantCulture, out var floatNumber))
+        {
+            tokens.Add(new NumberToken(floatNumber));
+        }
+        else
+        {
+            tokens.Add(new FieldAccessToken(wordString));
+        }
+        
         word.Clear();
     }
     
     private static void AddConstantAndClear(List<Token> tokens, List<char>? word)
     {
-        tokens.Add(new ConstantToken(string.Join(null, word ?? [])));
+        tokens.Add(new StringToken(string.Join(null, word ?? [])));
         word?.Clear();
     }
 }

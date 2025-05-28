@@ -14,9 +14,15 @@ public class TokenListBuilder : IEnumerable<Token>
         return this;
     }
     
-    public TokenListBuilder Constant(string constant)
+    public TokenListBuilder String(string constant)
     {
-        _tokens.Add(new ConstantToken(constant));
+        _tokens.Add(new StringToken(constant));
+        return this;
+    }
+    
+    public TokenListBuilder Number(float number)
+    {
+        _tokens.Add(new NumberToken(number));
         return this;
     }
     

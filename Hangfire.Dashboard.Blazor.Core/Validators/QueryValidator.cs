@@ -136,7 +136,7 @@ public static class QueryValidator
 
     private static bool IsOperand(Token token)
     {
-        return token is FieldAccessToken or ConstantToken;
+        return token is FieldAccessToken or StringToken;
     }
 
     private static bool IsExpressionEnd(ReadOnlySpan<Token> tokens)
@@ -159,8 +159,8 @@ public static class QueryValidator
         return
             (tokens[0] is { Type: TokenType.FieldAccess } &&
              tokens[1] is OperatorToken { Operator: not OperatorType.And and not OperatorType.Or } &&
-             tokens[2] is { Type: TokenType.Constant }) ||
-            (tokens[0] is { Type: TokenType.Constant } &&
+             tokens[2] is { Type: TokenType.String }) ||
+            (tokens[0] is { Type: TokenType.String } &&
              tokens[1] is OperatorToken { Operator: not OperatorType.And and not OperatorType.Or } &&
              tokens[2] is { Type: TokenType.FieldAccess });
     }

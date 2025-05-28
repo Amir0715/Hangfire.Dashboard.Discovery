@@ -21,7 +21,7 @@ public class ExpressionGeneratorTests
         var tokens = new TokenListBuilder()
             .FieldAccess("Type")
             .Equal()
-            .Constant("ScheduleEventHandleJob");
+            .String("ScheduleEventHandleJob");
         var expressionGenerator = new ExpressionGenerator();
 
         List<JobContext> jobs =
@@ -52,7 +52,7 @@ public class ExpressionGeneratorTests
             .Open()
             .FieldAccess("Type")
             .Equal()
-            .Constant("ScheduleEventHandleJob")
+            .String("ScheduleEventHandleJob")
             .Close();
         var expressionGenerator = new ExpressionGenerator();
 
@@ -84,12 +84,12 @@ public class ExpressionGeneratorTests
             .Open()
             .FieldAccess("Type")
             .Equal()
-            .Constant("ScheduleEventHandleJob")
+            .String("ScheduleEventHandleJob")
             .Close()
             .Or()
             .FieldAccess("Type")
             .Equal()
-            .Constant("ScheduleEventHandleJob2");
+            .String("ScheduleEventHandleJob2");
         var expressionGenerator = new ExpressionGenerator();
 
         List<JobContext> jobs =
@@ -124,7 +124,7 @@ public class ExpressionGeneratorTests
     {
         // (job.Type => ())
         var tokens = new TokenListBuilder()
-            .Constant("ScheduleEventHandleJob")
+            .String("ScheduleEventHandleJob")
             .Equal()
             .FieldAccess("Type");
         var expressionGenerator = new ExpressionGenerator();
@@ -162,7 +162,7 @@ public class ExpressionGeneratorTests
         var tokens = new TokenListBuilder()
             .FieldAccess("Type")
             .Like()
-            .Constant("2");
+            .String("2");
         var expressionGenerator = new ExpressionGenerator();
 
         List<JobContext> jobs =
@@ -196,7 +196,7 @@ public class ExpressionGeneratorTests
     {
         // (job.Type => ())
         var tokens = new TokenListBuilder()
-            .Constant("2")
+            .String("2")
             .Like()
             .FieldAccess("Type");
         var expressionGenerator = new ExpressionGenerator();
@@ -233,7 +233,7 @@ public class ExpressionGeneratorTests
         var tokens = new TokenListBuilder()
             .FieldAccess("Arguments.name")
             .Equal()
-            .Constant("ScheduleEventHandleJob");
+            .String("ScheduleEventHandleJob");
         var expressionGenerator = new ExpressionGenerator();
         List<JobContext> jobs =
         [

@@ -4,6 +4,7 @@ public enum TokenType
 {
     FieldAccess,
     Operator,
-    Constant,
+    String,
+    Number,
     Paren,
 }

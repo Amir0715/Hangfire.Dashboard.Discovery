@@ -29,7 +29,7 @@ public class ExpressionGenerator : IExpressionGenerator
                 case (null, FieldAccessToken fat):
                     currentExpression = Access(jobParameter, fat);
                     break;
-                case (null, ConstantToken constantToken):
+                case (null, StringToken constantToken):
                     currentExpression = Expression.Constant(constantToken.Value);
                     break;
                 case (null, OperatorToken {Operator: OperatorType.And or OperatorType.Or} op):
@@ -46,7 +46,7 @@ public class ExpressionGenerator : IExpressionGenerator
                 case (null, ParenToken { Paren: ParenType.Open }):
                     currentExpression = GenerateExpression(tokenEnumerator, jobParameter);
                     break;
-                case ({ } operatorToken, ConstantToken constantToken):
+                case ({ } operatorToken, StringToken constantToken):
                     currentExpression = BinaryExpression(currentExpression!, operatorToken, constantToken);
                     lastOperatorToken = null;
                     break;
@@ -76,7 +76,7 @@ public class ExpressionGenerator : IExpressionGenerator
                 case (null, FieldAccessToken fat):
                     prevExpression = Access(jobParameter, fat);
                     break;
-                case (null, ConstantToken constantToken):
+                case (null, StringToken constantToken):
                     prevExpression = Expression.Constant(constantToken.Value);
                     break;
                 
@@ -84,7 +84,7 @@ public class ExpressionGenerator : IExpressionGenerator
                     lastOperatorToken = operatorToken;
                     break;
                 
-                case ({ }, ConstantToken constantToken):
+                case ({ }, StringToken constantToken):
                     return BinaryExpression(prevExpression, lastOperatorToken, constantToken);
                 case ({ }, FieldAccessToken fat):
                     return BinaryExpression(prevExpression, lastOperatorToken, Access(jobParameter, fat));
@@ -134,10 +134,10 @@ public class ExpressionGenerator : IExpressionGenerator
     private static Expression BinaryExpression(
         Expression left,
         OperatorToken operatorToken,
-        ConstantToken constantToken
+        StringToken stringToken
     )
     {
-        return BinaryExpression(left, operatorToken, Expression.Constant(constantToken.Value));
+        return BinaryExpression(left, operatorToken, Expression.Constant(stringToken.Value));
     }
     
     private static Expression BinaryExpression(
