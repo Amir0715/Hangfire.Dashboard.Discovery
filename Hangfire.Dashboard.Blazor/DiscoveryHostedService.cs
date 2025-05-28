@@ -1,4 +1,5 @@
 using Hangfire.Dashboard.Blazor.Core.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -6,21 +7,25 @@ namespace Hangfire.Dashboard.Blazor;
 
 public class DashboardBackgroundService : BackgroundService
 {
-    private readonly IEnumerable<IDashboardBackgroundProcessor> _processors;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<DashboardBackgroundService> _logger;
 
     public DashboardBackgroundService(
-        IEnumerable<IDashboardBackgroundProcessor> processors,
+        IServiceProvider serviceProvider,
         ILogger<DashboardBackgroundService> logger)
     {
-        _processors = processors;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await using var scope = _serviceProvider.CreateAsyncScope();
+
+        var processors = scope.ServiceProvider.GetServices<IDashboardBackgroundProcessor>();
+        
         // Создаем отдельные задачи для каждого процессора
-        var processorTasks = _processors
+        var processorTasks = processors
             .Select(processor => ProcessSingleProcessor(processor, stoppingToken))
             .ToList();
 

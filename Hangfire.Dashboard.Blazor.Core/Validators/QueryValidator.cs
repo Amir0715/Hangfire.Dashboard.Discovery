@@ -10,6 +10,8 @@ public static class QueryValidator
 {
     public static Result IsValidTokenSequence(IEnumerable<Token> tokens)
     {
+        // TODO: FIX validation for dateTime, numbers
+        
         var tokensList = tokens.ToList();
 
         // Проверка на пустой список

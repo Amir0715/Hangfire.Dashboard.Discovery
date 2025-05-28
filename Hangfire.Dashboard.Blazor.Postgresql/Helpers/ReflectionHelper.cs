@@ -22,7 +22,7 @@ internal static class ReflectionHelper
         if (type is null)
             return Result<MethodInfo>.Failed($"Type '{typeName}' doesnt found.");
 
-        var types = argTypes.Select(x => _typeCache.GetOrAdd(typeName, Type.GetType)).ToArray();
+        var types = argTypes.Select(x => _typeCache.GetOrAdd(x, Type.GetType)).ToArray();
         if (types.Length > 0 && types.Any(x => x is null))
             return Result<MethodInfo>.Failed($"One of the type for arguments types doesnt found.");
 

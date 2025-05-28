@@ -32,7 +32,6 @@ public class JobArgumentUpdaterProcess : IDashboardBackgroundProcessor
         await ConfigureArgColumn(cancellationToken);
 
         var jobsWithoutArgs = await _context.Jobs
-            .AsNoTracking()
             .Where(x => x.Arguments == null)
             .ToListAsync(cancellationToken);
 
