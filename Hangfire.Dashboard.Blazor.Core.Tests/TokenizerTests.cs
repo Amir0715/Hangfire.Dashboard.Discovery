@@ -70,10 +70,57 @@ public class TokenizerTests
         new object[] { " \"jobtype<=T>=\" ", new TokenListBuilder().String("jobtype<=T>=") },
         new object[] { " \"jobtype==T\" ", new TokenListBuilder().String("jobtype==T") },
     };
-    
+
     [Theory]
     [MemberData(nameof(Tokenize_TestData))]
     public void Tokenizer_Should_Valid(string query, IEnumerable<Token> expectedTokens)
+    {
+        var actualTokens = new Tokenizer().Tokenize(query).ToList();
+        Assert.Equal(expectedTokens, actualTokens);
+    }
+
+    public static IEnumerable<object[]> Tokenize_TestData_Datetime = new List<object[]>
+    {
+        // DateTime
+        new object[] { "\"2025-05-28T12:00:00Z\"", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 12, 00, 00, TimeSpan.Zero)) },
+        new object[] { "\"2025-05-28T12:00:00\"", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 12, 00, 00, TimeZoneInfo.Local.BaseUtcOffset)) },
+        new object[] { "\"2025-05-28T12:00:00+3:00\"", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 12, 00, 00, TimeSpan.FromHours(3))) },
+        new object[] { "\"2025-05-28T12:00:00+0:00\"", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 12, 00, 00, TimeSpan.FromHours(0))) },
+        new object[] { "\"2025-05-28T00:00:00+0:00\"", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 00, 00, 00, TimeSpan.FromHours(0))) },
+        new object[] { " \"2025-05-28T12:00:00Z\" ", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 12, 00, 00, TimeSpan.Zero)) },
+        new object[] { " \"2025-05-28T12:00:00\" ", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 12, 00, 00, TimeZoneInfo.Local.BaseUtcOffset)) },
+        new object[] { " \"2025-05-28T12:00:00+3:00\" ", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 12, 00, 00, TimeSpan.FromHours(3))) },
+        new object[] { " \"2025-05-28T12:00:00+0:00\" ", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 12, 00, 00, TimeSpan.FromHours(0))) },
+        new object[] { " \"2025-05-28T00:00:00+0:00\" ", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 00, 00, 00, TimeSpan.FromHours(0))) },
+        new object[] { " \"2025-05-28Z\" ", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 00, 00, 00, TimeSpan.Zero)) },
+        new object[] { " \"2025-05-28\" ", new TokenListBuilder().DateTime(new DateTimeOffset(2025, 05, 28, 00, 00, 00, TimeZoneInfo.Local.BaseUtcOffset)) },
+        new object[] { "\"2025-05-28T12:00:00Z\"", new TokenListBuilder().DateTime("2025-05-28T12:00:00Z") },
+        
+        // DateTime with binary
+        new object[] { "CreatedAt==\"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").Equal().DateTime("2025-05-28T12:00:00Z") },
+        new object[] { "CreatedAt ==\"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").Equal().DateTime("2025-05-28T12:00:00Z") },
+        new object[] { "CreatedAt == \"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").Equal().DateTime("2025-05-28T12:00:00Z") },
+        
+        new object[] { "CreatedAt>\"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").Greater().DateTime("2025-05-28T12:00:00Z") },
+        new object[] { "CreatedAt >\"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").Greater().DateTime("2025-05-28T12:00:00Z") },
+        new object[] { "CreatedAt > \"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").Greater().DateTime("2025-05-28T12:00:00Z") },
+        
+        new object[] { "CreatedAt<\"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").Less().DateTime("2025-05-28T12:00:00Z") },
+        new object[] { "CreatedAt <\"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").Less().DateTime("2025-05-28T12:00:00Z") },
+        new object[] { "CreatedAt < \"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").Less().DateTime("2025-05-28T12:00:00Z") },
+        
+        new object[] { "CreatedAt<=\"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").LessOrEqual().DateTime("2025-05-28T12:00:00Z") },
+        new object[] { "CreatedAt <=\"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").LessOrEqual().DateTime("2025-05-28T12:00:00Z") },
+        new object[] { "CreatedAt <= \"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").LessOrEqual().DateTime("2025-05-28T12:00:00Z") },
+        
+        new object[] { "CreatedAt>=\"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").GreaterOrEqual().DateTime("2025-05-28T12:00:00Z") },
+        new object[] { "CreatedAt >=\"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").GreaterOrEqual().DateTime("2025-05-28T12:00:00Z") },
+        new object[] { "CreatedAt >= \"2025-05-28T12:00:00Z\"", new TokenListBuilder().FieldAccess("CreatedAt").GreaterOrEqual().DateTime("2025-05-28T12:00:00Z") },
+    };
+
+    [Theory]
+    [MemberData(nameof(Tokenize_TestData_Datetime))]
+    public void Tokenizer_Date_Should_Valid(string query, IEnumerable<Token> expectedTokens)
     {
         var actualTokens = new Tokenizer().Tokenize(query).ToList();
         Assert.Equal(expectedTokens, actualTokens);

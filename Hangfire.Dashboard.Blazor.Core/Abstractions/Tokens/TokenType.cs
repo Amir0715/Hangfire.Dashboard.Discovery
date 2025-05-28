@@ -6,5 +6,6 @@ public enum TokenType
     Operator,
     String,
     Number,
+    DateTime,
     Paren,
 }

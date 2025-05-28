@@ -26,6 +26,12 @@ public class TokenListBuilder : IEnumerable<Token>
         return this;
     }
     
+    public TokenListBuilder DateTime(DateTimeOffset value)
+    {
+        _tokens.Add(new DateTimeOffsetToken(value));
+        return this;
+    }
+    
     public TokenListBuilder Equal()
     {
         _tokens.Add(new OperatorToken(OperatorType.Equal));

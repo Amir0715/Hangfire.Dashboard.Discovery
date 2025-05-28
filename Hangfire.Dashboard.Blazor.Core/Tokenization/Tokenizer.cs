@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Hangfire.Dashboard.Blazor.Core.Abstractions;
@@ -116,7 +117,7 @@ start:
         var wordString = string.Join(null, word).Trim();
         if (string.IsNullOrWhiteSpace(wordString)) return;
         
-        // Проверяем, является ли токен числом
+        // Проверяем, является ли токен числом или датой
         if (float.TryParse(wordString, CultureInfo.InvariantCulture, out var floatNumber))
         {
             tokens.Add(new NumberToken(floatNumber));
@@ -131,7 +132,21 @@ start:
     
     private static void AddConstantAndClear(List<Token> tokens, List<char>? word)
     {
-        tokens.Add(new StringToken(string.Join(null, word ?? [])));
-        word?.Clear();
+        if (word is not { Count: > 0 }) return;
+        var wordString = string.Join(null, word);
+        
+        if (string.IsNullOrWhiteSpace(wordString))
+        {
+            tokens.Add(new StringToken(wordString));
+        } else if (DateTimeOffset.TryParse(wordString, out var dateTimeOffset))
+        {
+            tokens.Add(new DateTimeOffsetToken(dateTimeOffset));
+        }
+        else
+        {
+            tokens.Add(new StringToken(wordString));
+        }
+        
+        word.Clear();
     }
 }
