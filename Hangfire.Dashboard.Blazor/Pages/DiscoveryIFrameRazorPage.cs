@@ -2,7 +2,7 @@ using Hangfire.Dashboard.Pages;
 
 namespace Hangfire.Dashboard.Blazor.Pages;
 
-public partial class DiscoveryIFrameRazorPage : Hangfire.Dashboard.RazorPage
+public class DiscoveryIFrameRazorPage : RazorPage
 {
     public override void Execute()
     {
