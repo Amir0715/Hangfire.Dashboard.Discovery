@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddBitBlazorUIServices();
         services.AddRazorComponents()
             .AddInteractiveServerComponents();
+        services.AddHostedService<DashboardBackgroundService>();
         return services;
     }
     

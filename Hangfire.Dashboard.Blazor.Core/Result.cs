@@ -1,4 +1,6 @@
-namespace Hangfire.Dashboard.Blazor.Core.Validators;
+using System.Diagnostics.CodeAnalysis;
+
+namespace Hangfire.Dashboard.Blazor.Core;
 
 public class Result
 {
@@ -16,6 +18,8 @@ public class Result
 
 public class Result<T>
 {
+    [MemberNotNullWhen(true, nameof(Value))]
+    [MemberNotNullWhen(false, nameof(Error))]
     public bool IsSuccess => Error is null && Value is not null;
 
     public T? Value { get; }

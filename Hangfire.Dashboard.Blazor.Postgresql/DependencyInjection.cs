@@ -23,6 +23,7 @@ public static class DependencyInjection
             options.UseNpgsql(dataSourceBuilder.Build());
         });
 
+        services.AddScoped<IDashboardBackgroundProcessor, JobArgumentUpdaterProcess>();
         return services;
     }
 }

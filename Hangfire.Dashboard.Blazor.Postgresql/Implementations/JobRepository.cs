@@ -33,7 +33,7 @@ public class JobRepository : IJobRepository
                         j.invocationdata ->> 'Type'   AS "Type",
                         j.invocationdata ->> 'Method' AS "Method",
                         j.statename                   AS "State",
-                        j.arguments                   AS "Args",
+                        j.job_args                    AS "Args",
                         j.createdat                   AS "CreatedAt",
                         j.expireat                    AS "ExpireAt",
                         (SELECT s.data
