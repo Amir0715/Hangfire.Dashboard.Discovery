@@ -32,7 +32,10 @@ public class ExpressionGenerator : IExpressionGenerator
                 case (null, StringToken constantToken):
                     currentExpression = Expression.Constant(constantToken.Value);
                     break;
-                case (null, OperatorToken {Operator: OperatorType.And or OperatorType.Or} op):
+                case (null, NumberToken constantToken):
+                    currentExpression = Expression.Constant(constantToken.Value);
+                    break;
+                case (null, OperatorToken { Operator: OperatorType.And or OperatorType.Or } op):
                     var nextBooleanExpression = GetNextBoolExpression(tokenEnumerator, jobParameter);
                     currentExpression = BinaryExpression(currentExpression!, op, nextBooleanExpression);
                     break;
@@ -47,6 +50,10 @@ public class ExpressionGenerator : IExpressionGenerator
                     currentExpression = GenerateExpression(tokenEnumerator, jobParameter);
                     break;
                 case ({ } operatorToken, StringToken constantToken):
+                    currentExpression = BinaryExpression(currentExpression!, operatorToken, constantToken);
+                    lastOperatorToken = null;
+                    break;
+                case ({ } operatorToken, NumberToken constantToken):
                     currentExpression = BinaryExpression(currentExpression!, operatorToken, constantToken);
                     lastOperatorToken = null;
                     break;
@@ -72,20 +79,29 @@ public class ExpressionGenerator : IExpressionGenerator
             {
                 case (_, ParenToken):
                     return GenerateExpression(tokenEnumerator, jobParameter);
-                
+
                 case (null, FieldAccessToken fat):
                     prevExpression = Access(jobParameter, fat);
                     break;
+
                 case (null, StringToken constantToken):
                     prevExpression = Expression.Constant(constantToken.Value);
                     break;
-                
+
+                case (null, NumberToken constantToken):
+                    prevExpression = Expression.Constant(constantToken.Value);
+                    break;
+
                 case (null, OperatorToken operatorToken):
                     lastOperatorToken = operatorToken;
                     break;
-                
+
                 case ({ }, StringToken constantToken):
                     return BinaryExpression(prevExpression, lastOperatorToken, constantToken);
+
+                case ({ }, NumberToken constantToken):
+                    return BinaryExpression(prevExpression, lastOperatorToken, constantToken);
+
                 case ({ }, FieldAccessToken fat):
                     return BinaryExpression(prevExpression, lastOperatorToken, Access(jobParameter, fat));
             }
@@ -98,34 +114,32 @@ public class ExpressionGenerator : IExpressionGenerator
     {
         Span<Range> sectionsSpanRanges = stackalloc Range[fieldAccessToken.Depth];
         fieldAccessToken.FieldPath.AsSpan().Split(sectionsSpanRanges, '.');
-        
+
         Expression propOrField = Expression.PropertyOrField(expression,
             fieldAccessToken.FieldPath.AsSpan(sectionsSpanRanges[0]).ToString()
-            );
+        );
         var jsonDocumentAccess = false;
         foreach (var sectionRange in sectionsSpanRanges[1..])
         {
             var fieldName = fieldAccessToken.FieldPath.AsSpan(sectionRange).ToString();
+
             // Если мы встретили JsonDocument, то и все под вызовы начиная с него надо делать через GetProperty
             // Args.Name.list.queue
             if (propOrField.Type == typeof(JsonDocument))
             {
                 var rootElement = Expression.PropertyOrField(propOrField, nameof(JsonDocument.RootElement));
-                propOrField = Expression.Call(rootElement, nameof(JsonElement.GetProperty), [], Expression.Constant(fieldName));
-            } else if (propOrField.Type == typeof(JsonElement))
+                propOrField = Expression.Call(rootElement, nameof(JsonElement.GetProperty), [],
+                    Expression.Constant(fieldName));
+            }
+            else if (propOrField.Type == typeof(JsonElement))
             {
-                propOrField = Expression.Call(propOrField, nameof(JsonElement.GetProperty), [], Expression.Constant(fieldName));
+                propOrField = Expression.Call(propOrField, nameof(JsonElement.GetProperty), [],
+                    Expression.Constant(fieldName));
             }
             else
             {
                 propOrField = Expression.PropertyOrField(propOrField, fieldName);
             }
-        }
-
-        if (propOrField.Type == typeof(JsonElement))
-        {
-            // В конце цепочки необходимо вызвать GetString
-            propOrField = Expression.Call(propOrField, nameof(JsonElement.GetString), []);
         }
 
         return propOrField;
@@ -139,13 +153,36 @@ public class ExpressionGenerator : IExpressionGenerator
     {
         return BinaryExpression(left, operatorToken, Expression.Constant(stringToken.Value));
     }
-    
+
+    private static Expression BinaryExpression(
+        Expression left,
+        OperatorToken operatorToken,
+        NumberToken numberToken
+    )
+    {
+        return BinaryExpression(left, operatorToken, Expression.Constant(numberToken.Value));
+    }
+
     private static Expression BinaryExpression(
         Expression left,
         OperatorToken operatorToken,
         Expression right
     )
     {
+        if (left.Type == typeof(float) && right.Type == typeof(JsonElement))
+        {
+            right = Expression.Call(right, nameof(JsonElement.GetSingle), []);
+        } else if (right.Type == typeof(float) && left.Type == typeof(JsonElement))
+        {
+            left = Expression.Call(left, nameof(JsonElement.GetSingle), []);
+        } else if (left.Type == typeof(string) && right.Type == typeof(JsonElement))
+        {
+            right = Expression.Call(right, nameof(JsonElement.GetString), []);
+        } else if (right.Type == typeof(string) && left.Type == typeof(JsonElement))
+        {
+            left = Expression.Call(left, nameof(JsonElement.GetString), []);
+        }
+        
         return operatorToken.Operator switch
         {
             OperatorType.And => Expression.AndAlso(left, right),

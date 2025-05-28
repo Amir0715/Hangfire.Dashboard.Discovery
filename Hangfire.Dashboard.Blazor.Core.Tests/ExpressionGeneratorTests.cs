@@ -194,7 +194,7 @@ public class ExpressionGeneratorTests
     [Fact]
     public void GenerateExpression_Valid6()
     {
-        // (job.Type => ())
+        // (jobCtx => (string.Contains(jobCtx.Type, "2"))
         var tokens = new TokenListBuilder()
             .String("2")
             .Like()
@@ -277,5 +277,126 @@ public class ExpressionGeneratorTests
         Assert.True(actual.All(expectedExpression.Compile()));
 
         // Assert.Equal(expectedExpression, actualExpression);
+    }
+
+    [Fact]
+    public void GenerateExpression_Number_Valid()
+    {
+        // (jobCtx => jobCtx.Args.Number == 3)
+        var tokens = new TokenListBuilder()
+            .FieldAccess("Args.Number")
+            .Equal()
+            .Number(3);
+        var expressionGenerator = new ExpressionGenerator();
+
+        var correctJson = """{"Number":3}""";
+        var incorrectJson = """{"Number":5}""";
+        List<JobContext> jobs =
+        [
+            new()
+            {
+                Type = "ScheduleEventHandleJob",
+                Args = JsonDocument.Parse(correctJson)
+            },
+            new()
+            {
+                Type = "ScheduleEventHandleJob2",
+                Args = JsonDocument.Parse(incorrectJson)
+            },
+            new()
+            {
+                Type = "ScheduleEventHandleJob3",
+                Args = JsonDocument.Parse(correctJson)
+            }
+        ];
+        
+        var actualExpression = expressionGenerator.GenerateExpression(tokens);
+        _testOutputHelper.WriteLine(actualExpression.ToString());
+        
+        Expression<Func<JobContext, bool>> expectedExpression = job => job.Args.RootElement.GetProperty("Number").GetSingle() == 3f;
+        
+        var actual = jobs.AsQueryable().Where(actualExpression).ToList();
+        Assert.Equal(jobs.Count(expectedExpression.Compile()), actual.Count);
+        Assert.True(actual.All(expectedExpression.Compile()));
+    }
+    
+    [Fact]
+    public void GenerateExpression_Number_Valid2()
+    {
+        Expression<Func<JobContext, bool>> expectedExpression = 
+            job => job.Args.RootElement.GetProperty("Number").GetSingle() > 3.5f;
+        var tokens = new TokenListBuilder()
+            .FieldAccess("Args.Number")
+            .Greater()
+            .Number(3.2f);
+        var expressionGenerator = new ExpressionGenerator();
+
+        var correctJson = """{"Number":3.2}""";
+        var incorrectJson = """{"Number":5.1}""";
+        List<JobContext> jobs =
+        [
+            new()
+            {
+                Type = "ScheduleEventHandleJob",
+                Args = JsonDocument.Parse(correctJson)
+            },
+            new()
+            {
+                Type = "ScheduleEventHandleJob2",
+                Args = JsonDocument.Parse(incorrectJson)
+            },
+            new()
+            {
+                Type = "ScheduleEventHandleJob3",
+                Args = JsonDocument.Parse(correctJson)
+            }
+        ];
+        
+        var actualExpression = expressionGenerator.GenerateExpression(tokens);
+        _testOutputHelper.WriteLine(actualExpression.ToString());
+        
+        var actual = jobs.AsQueryable().Where(actualExpression).ToList();
+        Assert.Equal(jobs.Count(expectedExpression.Compile()), actual.Count);
+        Assert.True(actual.All(expectedExpression.Compile()));
+    }
+    
+    [Fact]
+    public void GenerateExpression_Number_Valid3()
+    {
+        Expression<Func<JobContext, bool>> expectedExpression = 
+            job => job.Args.RootElement.GetProperty("Number").GetSingle() >= 5.1f;
+        var tokens = new TokenListBuilder()
+            .FieldAccess("Args.Number")
+            .GreaterOrEqual()
+            .Number(5.1f);
+        var expressionGenerator = new ExpressionGenerator();
+
+        var correctJson = """{"Number":3.2}""";
+        var incorrectJson = """{"Number":5.1}""";
+        List<JobContext> jobs =
+        [
+            new()
+            {
+                Type = "ScheduleEventHandleJob",
+                Args = JsonDocument.Parse(correctJson)
+            },
+            new()
+            {
+                Type = "ScheduleEventHandleJob2",
+                Args = JsonDocument.Parse(incorrectJson)
+            },
+            new()
+            {
+                Type = "ScheduleEventHandleJob3",
+                Args = JsonDocument.Parse(correctJson)
+            }
+        ];
+        
+        var actualExpression = expressionGenerator.GenerateExpression(tokens);
+        _testOutputHelper.WriteLine(actualExpression.ToString());
+        
+        var actual = jobs.AsQueryable().Where(actualExpression).ToList();
+        Assert.Equal(jobs.Count(expectedExpression.Compile()), actual.Count);
+        Assert.True(actual.All(expectedExpression.Compile()));
     }
 }
