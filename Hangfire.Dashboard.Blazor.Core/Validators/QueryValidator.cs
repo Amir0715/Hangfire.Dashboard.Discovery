@@ -138,7 +138,7 @@ public static class QueryValidator
 
     private static bool IsOperand(Token token)
     {
-        return token is FieldAccessToken or StringToken;
+        return token is FieldAccessToken or StringToken or NumberToken or DateTimeOffsetToken;
     }
 
     private static bool IsExpressionEnd(ReadOnlySpan<Token> tokens)

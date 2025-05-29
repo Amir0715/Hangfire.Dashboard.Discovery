@@ -88,7 +88,31 @@ public class TokenSequenceValidatorTests
                 .FieldAccess("c").Like().String("d"),
             true
         },
+        
+        new object[] { new TokenListBuilder().FieldAccess("a").Equal().DateTime(DateTimeOffset.UtcNow), true },
+        new object[] { new TokenListBuilder().FieldAccess("a").Greater().DateTime(DateTimeOffset.UtcNow), true },
+        new object[] { new TokenListBuilder().FieldAccess("a").GreaterOrEqual().DateTime(DateTimeOffset.UtcNow), true },
+        new object[] { new TokenListBuilder().FieldAccess("a").Less().DateTime(DateTimeOffset.UtcNow), true },
+        new object[] { new TokenListBuilder().FieldAccess("a").LessOrEqual().DateTime(DateTimeOffset.UtcNow), true },
+        
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").Equal().DateTime(DateTimeOffset.UtcNow).Close(), true },
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").Greater().DateTime(DateTimeOffset.UtcNow).Close(), true },
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").GreaterOrEqual().DateTime(DateTimeOffset.UtcNow).Close(), true },
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").Less().DateTime(DateTimeOffset.UtcNow).Close(), true },
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").LessOrEqual().DateTime(DateTimeOffset.UtcNow).Close(), true },
 
+        new object[] { new TokenListBuilder().FieldAccess("a").Equal().Number(1.2f), true },
+        new object[] { new TokenListBuilder().FieldAccess("a").Greater().Number(1.2f), true },
+        new object[] { new TokenListBuilder().FieldAccess("a").GreaterOrEqual().Number(1.2f), true },
+        new object[] { new TokenListBuilder().FieldAccess("a").Less().Number(1.2f), true },
+        new object[] { new TokenListBuilder().FieldAccess("a").LessOrEqual().Number(1.2f), true },
+        
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").Equal().Number(1.2f).Close(), true },
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").Greater().Number(1.2f).Close(), true },
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").GreaterOrEqual().Number(1.2f).Close(), true },
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").Less().Number(1.2f).Close(), true },
+        new object[] { new TokenListBuilder().Open().FieldAccess("a").LessOrEqual().Number(1.2f).Close(), true },
+        
         // Отрицательные кейсы
         // Неправильные скобочные структуры
         new object[] { new TokenListBuilder().Open().FieldAccess("a").Equal().String("b"), false },
