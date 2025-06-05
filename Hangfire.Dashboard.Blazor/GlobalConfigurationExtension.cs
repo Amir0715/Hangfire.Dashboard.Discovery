@@ -1,3 +1,4 @@
+using Hangfire.Dashboard.Blazor.Core.Hangfire;
 using Hangfire.Dashboard.Blazor.Pages;
 
 namespace Hangfire.Dashboard.Blazor;
@@ -13,6 +14,8 @@ public static class GlobalConfigurationExtension
         {
             Active = page.RequestPath == _defaultRouteBase || page.RequestPath.StartsWith($"{_defaultRouteBase}/")
         });
+
+        configuration.UseFilter(new JobArgumentScrapFilter());
 
         return configuration;
     } 

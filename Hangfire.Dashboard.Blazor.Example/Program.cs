@@ -1,5 +1,6 @@
 using Hangfire;
 using Hangfire.Dashboard.Blazor;
+using Hangfire.Dashboard.Blazor.Postgresql;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,7 +23,7 @@ builder.Services.AddHangfire(c => c
 
 builder.Services.AddHangfireServer();
 
-builder.Services.AddHangfireBlazorDashboard(builder.Configuration);
+builder.Services.AddHangfireDiscoveryWithPostgresStorage();
 
 var app = builder.Build();
 app.UseStaticFiles();

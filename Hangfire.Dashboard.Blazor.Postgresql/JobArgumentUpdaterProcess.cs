@@ -29,8 +29,8 @@ public class JobArgumentUpdaterProcess : IDashboardBackgroundProcessor
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        await ConfigureArgColumn(cancellationToken);
 
+        // TODO: Использовать Set как это делают другие либы.
         var jobsWithoutArgs = await _context.Jobs
             .Where(x => x.Arguments == null)
             .ToListAsync(cancellationToken);
@@ -85,31 +85,7 @@ public class JobArgumentUpdaterProcess : IDashboardBackgroundProcessor
 
         _logger.LogInformation("Processed {jobs} jobs", jobsWithoutArgs.Count);
     }
-
-    private Task ConfigureArgColumn(CancellationToken cancellationToken)
-    {
-        var schemaQualifiedTableName = _context.Jobs.EntityType.GetSchemaQualifiedTableName();
-        var jobSchemaName = _context.Jobs.EntityType.GetSchema();
-        var jobTableName = _context.Jobs.EntityType.GetTableName();
-        return _context.Database.ExecuteSqlRawAsync(
-            $"""
-             DO $$
-             BEGIN
-                 IF NOT EXISTS (
-                     SELECT 1 
-                     FROM information_schema.columns 
-                     WHERE
-                         table_schema = '{jobSchemaName}'
-                     AND table_name = '{jobTableName}' 
-                     AND column_name = 'job_args'
-                 ) THEN
-                     ALTER TABLE {schemaQualifiedTableName} ADD COLUMN job_args JSONB;
-                 END IF;
-             END $$;
-             CREATE INDEX IF NOT EXISTS idx_job_info_args ON {schemaQualifiedTableName} USING GIN (job_args);
-             """, cancellationToken: cancellationToken);
-    }
-
+    
     private static string[] DeserializeParameterTypes(string parameterTypes)
     {
         return JsonSerializer.Deserialize<string[]>(parameterTypes) ?? [];

@@ -11,8 +11,8 @@ public class JobContext : IDisposable
     
     public string Type { get; set; }
     public string Method { get; set; }
-    public JsonDocument Args { get; set; }
-    public JsonDocument Params { get; set; }
+    public JsonDocument? Args { get; set; }
+    public JsonDocument? Params { get; set; }
     public JsonDocument? StateData { get; set; }
     
     public DateTimeOffset CreatedAt { get; set; }
@@ -48,8 +48,8 @@ public class JobContext : IDisposable
 
     public void Dispose()
     {
-        Args.Dispose();
-        Params.Dispose();
+        Args?.Dispose();
+        Params?.Dispose();
         StateData?.Dispose();
     }
 }

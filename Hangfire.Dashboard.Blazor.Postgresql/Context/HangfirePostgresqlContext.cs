@@ -1,27 +1,27 @@
 ﻿using Hangfire.Dashboard.Blazor.Postgresql.Models;
+using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Hangfire.Dashboard.Blazor.Postgresql.Context;
 
-public partial class HangfirePostgresqlContext : DbContext
+public class HangfirePostgresqlContext : DbContext
 {
-    public HangfirePostgresqlContext(DbContextOptions<HangfirePostgresqlContext> options)
+    internal static string? SchemaName;
+
+    public HangfirePostgresqlContext(DbContextOptions<HangfirePostgresqlContext> options, PostgreSqlStorageOptions postgreSqlStorageOptions)
         : base(options)
     {
+        SchemaName = postgreSqlStorageOptions.SchemaName;
     }
 
     public virtual DbSet<Job> Jobs { get; set; }
-
-    public virtual DbSet<Jobparameter> Jobparameters { get; set; }
-
-    public virtual DbSet<Jobqueue> Jobqueues { get; set; }
-
-    public virtual DbSet<State> States { get; set; }
-    public virtual DbSet<JobInfo> JobInfos { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        if (!string.IsNullOrWhiteSpace(SchemaName))
+        {
+            modelBuilder.HasDefaultSchema(SchemaName);
+        }
         modelBuilder.Entity<Job>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("job_pkey");
@@ -49,76 +49,5 @@ public partial class HangfirePostgresqlContext : DbContext
             entity.Property(e => e.State)
                 .HasColumnName("statename");
         });
-
-        modelBuilder.Entity<Jobparameter>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("jobparameter_pkey");
-
-            entity.ToTable("jobparameter", "hangfire");
-
-            entity.HasIndex(e => new { e.Jobid, e.Name }, "ix_hangfire_jobparameter_jobidandname");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Jobid).HasColumnName("jobid");
-            entity.Property(e => e.Name).HasColumnName("name");
-            
-            entity.Property(e => e.Value).HasColumnName("value");
-        });
-
-        modelBuilder.Entity<Jobqueue>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("jobqueue_pkey");
-
-            entity.ToTable("jobqueue", "hangfire");
-
-            entity.HasIndex(e => new { e.Fetchedat, e.Queue, e.Jobid }, "ix_hangfire_jobqueue_fetchedat_queue_jobid")
-                .HasNullSortOrder(new[] { NullSortOrder.NullsFirst, NullSortOrder.NullsLast, NullSortOrder.NullsLast });
-
-            entity.HasIndex(e => new { e.Jobid, e.Queue }, "ix_hangfire_jobqueue_jobidandqueue");
-
-            entity.HasIndex(e => new { e.Queue, e.Fetchedat }, "ix_hangfire_jobqueue_queueandfetchedat");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Fetchedat).HasColumnName("fetchedat");
-            entity.Property(e => e.Jobid).HasColumnName("jobid");
-            entity.Property(e => e.Queue).HasColumnName("queue");
-            entity.Property(e => e.Updatecount)
-                .HasDefaultValue(0)
-                .HasColumnName("updatecount");
-        });
-
-        modelBuilder.Entity<State>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("state_pkey");
-
-            entity.ToTable("state", "hangfire");
-
-            entity.HasIndex(e => e.Jobid, "ix_hangfire_state_jobid");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Createdat).HasColumnName("createdat");
-            entity.Property(e => e.Data)
-                .HasColumnType("jsonb")
-                .HasColumnName("data");
-            entity.Property(e => e.Jobid).HasColumnName("jobid");
-            entity.Property(e => e.Name).HasColumnName("name");
-            entity.Property(e => e.Reason).HasColumnName("reason");
-            entity.Property(e => e.Updatecount)
-                .HasDefaultValue(0)
-                .HasColumnName("updatecount");
-        });
-
-        modelBuilder.Entity<JobInfo>(entity =>
-        {
-            entity.ToTable("job_info", "hangfire");
-            entity.HasKey(x => new { x.JobType, x.JobMethod }).HasName("job_info_pkey");
-            entity.Property(x => x.Args).HasColumnName("job_args").HasColumnType("jsonb");
-            entity.Property(x => x.JobMethod).HasColumnName("job_method");
-            entity.Property(x => x.JobType).HasColumnName("job_type");
-        });
-        
-        OnModelCreatingPartial(modelBuilder);
     }
-
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

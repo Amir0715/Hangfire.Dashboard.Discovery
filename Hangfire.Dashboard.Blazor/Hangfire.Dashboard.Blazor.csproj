@@ -23,7 +23,6 @@
     
     <ItemGroup>
         <ProjectReference Include="..\Hangfire.Dashboard.Blazor.Core\Hangfire.Dashboard.Blazor.Core.csproj"/>
-        <ProjectReference Include="..\Hangfire.Dashboard.Blazor.Postgresql\Hangfire.Dashboard.Blazor.Postgresql.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

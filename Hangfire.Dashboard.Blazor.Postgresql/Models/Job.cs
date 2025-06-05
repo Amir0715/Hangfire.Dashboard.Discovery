@@ -15,6 +15,4 @@ public class Job
     public DateTime Createdat { get; set; }
 
     public DateTime? Expireat { get; set; }
-
-    public virtual ICollection<Jobparameter> Jobparameters { get; set; } = new List<Jobparameter>();
 }
