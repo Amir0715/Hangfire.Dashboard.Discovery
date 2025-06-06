@@ -67,16 +67,16 @@ public class PostgresJobRepository : IJobRepository
             .WhereIf(query.EndDateTimeOffset.HasValue,
                 job => job.CreatedAt <= query.EndDateTimeOffset!.Value.UtcDateTime);
 
-        var jobs = q
+        var jobs = await q
             .WhereIf(timePagination is { Offset: not null, Direction: ListSortDirection.Ascending },
                 job => job.CreatedAt >= timePagination.Offset)
             .WhereIf(timePagination is { Offset: not null, Direction: ListSortDirection.Descending },
                 job => job.CreatedAt <= timePagination.Offset)
             .OrderByDirection(x => x.CreatedAt, timePagination.Direction)
             .Take(timePagination.Limit)
-            .ToList();
+            .ToListAsync();
 
-        var total = q.Count();
+        var total = await q.CountAsync();
         var nextOffset = timePagination.Direction switch
         {
             ListSortDirection.Ascending => jobs.MaxBy(d => d.CreatedAt)?.CreatedAt,

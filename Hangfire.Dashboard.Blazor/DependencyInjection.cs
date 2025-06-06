@@ -1,4 +1,3 @@
-using Bit.BlazorUI;
 using FluentValidation;
 using Hangfire.Dashboard.Blazor.Components;
 using Hangfire.Dashboard.Blazor.Core;
@@ -14,7 +13,7 @@ namespace Hangfire.Dashboard.Blazor;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddHangfireBlazorDashboard(this IServiceCollection services)
+    public static IServiceCollection AddHangfireBlazorDashboard(this IServiceCollection services, Action<HangfireDiscoveryOptions>? optionConfigure = null)
     {
         // TODO: remove FluentValidation
         services.AddValidatorsFromAssemblyContaining(typeof(QueryValidator));
@@ -22,12 +21,14 @@ public static class DependencyInjection
         services.AddScoped<IJobProvider, JobProvider>();
         services.AddScoped<IExpressionGenerator, ExpressionGenerator>();
         
-        // TODO: remove Bit.BlazorUI;
-        services.AddBitBlazorUIServices();
-        
         services.AddRazorComponents()
             .AddInteractiveServerComponents();
         services.AddHostedService<DashboardBackgroundService>();
+
+        var optionsBuilder = services.AddOptions<HangfireDiscoveryOptions>();
+        if (optionConfigure != null)
+            optionsBuilder.Configure(optionConfigure);
+        
         return services;
     }
     

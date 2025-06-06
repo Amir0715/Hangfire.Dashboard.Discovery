@@ -2,9 +2,9 @@
 @using System.ComponentModel
 @using Hangfire.Dashboard.Blazor.Core.Abstractions
 @using Hangfire.Dashboard.Blazor.Core.Dtos
-@using Hangfire.Dashboard.Blazor.Core.Validators
 @using Hangfire.Dashboard.Blazor.Components.TagSelector
 @using Hangfire.Dashboard.Blazor.Components.SimpleTimeRangePicker
+@using Microsoft.Extensions.Options
 
 <style>
     .toolbar {
@@ -26,9 +26,10 @@
     <div class="d-flex toolbar justify-content-between mt-3 align-items-baseline">
         @if (!(_lastPaginationResult?.IsSuccess ?? true))
         {
-            <BitMessage Color="BitColor.Error" Variant="BitVariant.Text">
+            <div class="text-danger">
+                <i class="bi bi-x-circle-fill"></i>
                 @_lastPaginationResult?.Error
-            </BitMessage>
+            </div>
         }
         <TagSelector
             Placeholder="Select job parameters..."
@@ -63,9 +64,19 @@
 
     [Inject]
     private IJobProvider JobProvider { get; set; }
+    
+    [Inject]
+    private IOptions<HangfireDiscoveryOptions> HangfireDiscoveryOptions { get; set; }
 
     private HashSet<string> _allJobParams = [];
     private ICollection<string> _showJobParams = [];
+
+    protected override void OnInitialized()
+    {
+        _dateTimeRange.StartDateTime = DateTimeOffset.UtcNow.Add(-HangfireDiscoveryOptions.Value.StartDateTimeOffsetByNow);
+        _timePaginationQuery.Data.QueryString = HangfireDiscoveryOptions.Value.StartUpQuery;
+        base.OnInitialized();
+    }
 
     private async Task SearchJobsAsync()
     {

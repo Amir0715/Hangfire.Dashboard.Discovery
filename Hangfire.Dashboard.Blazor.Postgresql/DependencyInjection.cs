@@ -13,9 +13,9 @@ namespace Hangfire.Dashboard.Blazor.Postgresql;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddHangfireDiscoveryWithPostgresStorage(this IServiceCollection services)
+    public static IServiceCollection AddHangfireDiscoveryWithPostgresStorage(this IServiceCollection services, Action<HangfireDiscoveryOptions> optionConfigure = null)
     {
-        services.AddHangfireBlazorDashboard();
+        services.AddHangfireBlazorDashboard(optionConfigure);
 
         services.AddScoped<IJobRepository, PostgresJobRepository>();
         services.AddPostgresServices();

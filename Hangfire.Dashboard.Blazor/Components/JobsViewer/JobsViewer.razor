@@ -149,11 +149,14 @@
     .job-created-at {
         margin-left: auto;
     }
-    
+
     .jobs {
         max-height: calc(100vh - 200px);
         overflow-y: auto;
         margin-top: 0.5rem;
+        scrollbar-width: thin;
+        scrollbar-color: #adbac7 #2d343c;
+        padding-right: 5px;
     }
 </style>
 
@@ -191,26 +194,26 @@
             </div>
 
             <button class="toggle-details-btn" @onclick="@(() => ToggleDetails(job))">
-                <span>@(_expandedJobs.ContainsKey(job.Id) ? "Скрыть детали" : "Показать детали")</span>
+                <span>@(_expandedJobs.ContainsKey(job.Id) ? "Expand" : "Collapse")</span>
                 <i class="bi bi-chevron-down toggle-icon @(_expandedJobs.ContainsKey(job.Id) ? "expanded" : "")"></i>
             </button>
 
             @if (_expandedJobs.ContainsKey(job.Id))
             {
                 <div class="details-panel">
-                    <h4>Аргументы</h4>
+                    <h4>Arguments</h4>
                     <div class="json-preview">
                         <pre>@PrettyPrintJson(job.Args.RootElement)</pre>
                     </div>
 
-                    <h4>Параметры</h4>
+                    <h4>Parameters</h4>
                     <div class="json-preview">
                         <pre>@PrettyPrintJson(job.Params.RootElement)</pre>
                     </div>
 
                     @if (job.StateData != null)
                     {
-                        <h4>Состояние</h4>
+                        <h4>State</h4>
                         <div class="json-preview">
                             <pre>@PrettyPrintJson(job.StateData.RootElement)</pre>
                         </div>
@@ -222,10 +225,14 @@
     @if (_isLoadingMore)
     {
         <div class="loading-indicator">
-            Загрузка...
+            Loading...
         </div>
     }
-    
+    @if (_notMoreItems)
+    {
+        <div>No more jobs</div>
+    }
+
     <div @ref="@_intersectionObserverTargetElement" style="width: 1px;"></div>
 </div>
 
@@ -235,7 +242,7 @@
             if (entries[0].isIntersecting) {
                 await dotNetInstance.invokeMethodAsync('CallLoadMoreItems');
             }
-        }, { threshold: 1.0 });
+        }, {threshold: 1.0});
 
         observer.observe(element);
     }
@@ -246,6 +253,7 @@
 </script>
 
 @code {
+
     [Parameter]
     public IEnumerable<JobContext> Items { get; set; }
 
@@ -256,10 +264,10 @@
 
     [Parameter]
     public ICollection<string> ShowJobParams { get; set; } = [];
-    
+
     [Inject]
     public IJSRuntime JsRuntime { get; set; }
-    
+
     private Dictionary<long, bool> _expandedJobs = new();
     private ElementReference _intersectionObserverTargetElement;
     private bool _isLoadingMore;
@@ -299,7 +307,7 @@
     public async Task CallLoadMoreItems()
     {
         if (LoadMoreItems == null || _notMoreItems || _isLoadingMore || _items.Count == 0) return;
-        
+
         _isLoadingMore = true;
         StateHasChanged();
 
@@ -311,6 +319,7 @@
                 _notMoreItems = true;
                 return;
             }
+
             _items.AddRange(moreItems);
         }
         finally
@@ -364,9 +373,8 @@
 
         if (_dotNetObjectReference != null)
         {
-            JsRuntime.InvokeVoid("unregisterScrollHandler", _intersectionObserverTargetElement);
+            JsRuntime.InvokeVoidAsync("unregisterScrollHandler", _intersectionObserverTargetElement);
             _dotNetObjectReference.Dispose();
         }
     }
-
 }

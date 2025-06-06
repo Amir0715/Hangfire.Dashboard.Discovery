@@ -13,9 +13,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Bit.BlazorUI" Version="9.5.1"/>
-        <PackageReference Include="Bit.BlazorUI.Extras" Version="9.5.1"/>
-        <PackageReference Include="Bit.BlazorUI.Icons" Version="9.5.1"/>
         <PackageReference Include="BlazorMonaco" Version="3.3.0"/>
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0"/>
         <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.13"/>
@@ -27,5 +24,9 @@
 
     <ItemGroup>
         <Folder Include="wwwroot\lib\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <UpToDateCheckInput Remove="Components\Playground\TokenSequenceValidator.razor" />
     </ItemGroup>
 </Project>
