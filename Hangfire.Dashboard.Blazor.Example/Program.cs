@@ -2,6 +2,7 @@ using Hangfire;
 using Hangfire.Dashboard.Blazor;
 using Hangfire.Dashboard.Blazor.Postgresql;
 using Hangfire.PostgreSql;
+using Hangfire.Server;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,7 +52,6 @@ app.MapGet("/success", (
             backgroundJobClient.Enqueue<JobClass>(q, job => job.Success(d));
         }
     }
-    
 });
 
 app.MapGet("/error", (
@@ -116,6 +116,36 @@ app.MapGet("/many_args", (
     }
 });
 
+app.MapGet("/with_params", ([FromServices] IBackgroundJobClient backgroundJobClient) =>
+{
+    ComplexArgument complexArgument = new ComplexArgument()
+    {
+        Value1 = Guid.NewGuid().ToString(),
+        Value2 = Guid.NewGuid(),
+        InnerArgument = new ComplexArgument()
+        {
+            Value1 = Guid.NewGuid().ToString(),
+            Value2 = Guid.Empty,
+            InnerArgument = new ComplexArgument()
+            {
+                Value1 = String.Empty,
+                Value2 = Guid.Parse("07d1e637-0f76-4e02-a5ab-d6afd7bb4c4f"),
+                InnerArgument = null
+            }
+        }
+    };
+
+    var number = Random.Shared.Next(100);
+    var str = Guid.NewGuid().ToString(); 
+    backgroundJobClient.Enqueue<JobClass>(job => job.WithProperty(
+        number,
+        str,
+        complexArgument,
+        CancellationToken.None, 
+        null
+    ));
+});
+
 app.Run();
 
 public class JobClass
@@ -142,13 +172,27 @@ public class JobClass
 
         _logger.LogInformation("{job} done after {delaySeconds}", nameof(Success), delaySeconds);
     }
-    
+
     public async ValueTask ManyArgs(string arg1, string arg2, ComplexArgument complex, int? delaySeconds = null)
     {
         if (delaySeconds.HasValue)
             await Task.Delay(TimeSpan.FromSeconds(delaySeconds.Value));
 
-        _logger.LogInformation("{job} done after {delaySeconds}, {arg1}, {arg2}, {@complex}", nameof(Success), delaySeconds, arg1, arg2, complex);
+        _logger.LogInformation("{job} done after {delaySeconds}, {arg1}, {arg2}, {@complex}", nameof(Success),
+            delaySeconds, arg1, arg2, complex);
+    }
+
+    public async ValueTask WithProperty(
+        int number,
+        string arg1,
+        ComplexArgument complex,
+        CancellationToken cancellationToken,
+        PerformContext performContext = null
+    )
+    {
+        performContext.SetJobParameter("int", number);
+        performContext.SetJobParameter("string", arg1);
+        performContext.SetJobParameter("complex", complex);
     }
 }
 

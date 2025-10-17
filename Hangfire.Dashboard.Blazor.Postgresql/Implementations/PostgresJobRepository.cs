@@ -81,7 +81,7 @@ public class PostgresJobRepository : IJobRepository
         {
             ListSortDirection.Ascending => jobs.MaxBy(d => d.CreatedAt)?.CreatedAt,
             ListSortDirection.Descending => jobs.MinBy(d => d.CreatedAt)?.CreatedAt,
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(nameof(timePagination.Direction), "Provided not supported sort direction")
         };
         return new TimePaginationResult<JobContext>(jobs, nextOffset, timePagination.Limit, total);
     }
