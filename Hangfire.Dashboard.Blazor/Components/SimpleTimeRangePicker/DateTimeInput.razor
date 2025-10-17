@@ -19,7 +19,7 @@
     <input type="datetime-local"
            class="input-field"
            value="@_localValue"
-           @onchange="@(args => HandleInput(args.Value?.ToString()))" />
+           @onchange="@(args => HandleInput(args.Value?.ToString()))"/>
     @if (!string.IsNullOrEmpty(_error))
     {
         <div class="text-danger">@_error</div>
@@ -27,29 +27,48 @@
 </div>
 
 @code {
-    [Parameter] public string Label { get; set; }
-    [Parameter] public DateTimeOffset? Value { get; set; }
-    [Parameter] public EventCallback<DateTimeOffset?> ValueChanged { get; set; }
 
-    private string _localValue;
-    private string _error;
+    [Parameter]
+    public string Label { get; set; }
 
-    protected override void OnParametersSet()
+    [Parameter]
+    public DateTimeOffset? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<DateTimeOffset?> ValueChanged { get; set; }
+
+    [Inject]
+    public BrowserTimeService BrowserTimeService { get; set; } = null!;
+
+    private string _localValue = string.Empty;
+    private string? _error;
+    private const string DateTimeLocalHtmlInputFormat = "yyyy-MM-ddTHH:mm";
+
+    protected override async Task OnParametersSetAsync()
     {
-        _localValue = Value?.ToString("yyyy-MM-ddTHH:mm") ?? "";
+        if (Value.HasValue)
+        {
+            var browserDateTime = await BrowserTimeService.ToBrowserDateTimeAsync(Value.Value);
+            _localValue = browserDateTime.ToString(DateTimeLocalHtmlInputFormat);
+        }
     }
 
     private async Task HandleInput(string? newValue)
     {
-        if (DateTimeOffset.TryParse(newValue, out var result))
+        if (_localValue == newValue) return;
+        
+        // В newValue будет лежать локальное время пользователя
+        if (DateTime.TryParse(newValue, out var dateTime))
         {
             _error = null;
             _localValue = newValue;
-            await ValueChanged.InvokeAsync(result);
+            var browserDateTimeOffset = await BrowserTimeService.FromBrowserDateTimeAsync(dateTime);
+            await ValueChanged.InvokeAsync(browserDateTimeOffset);
         }
         else
         {
             _error = "Invalid date format";
         }
     }
+
 }

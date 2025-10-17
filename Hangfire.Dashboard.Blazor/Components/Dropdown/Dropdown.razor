@@ -3,6 +3,7 @@
 <div class="custom-select">
     <select @bind="SelectedItem" 
             @bind:event="onchange"
+            @bind:after="@(() => SelectedItemChanged.InvokeAsync(SelectedItem))"
             class="select-element">
         @foreach (var item in Items)
         {

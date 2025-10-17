@@ -1,4 +1,5 @@
 @using System.Text.Json
+@using Hangfire.Dashboard.Blazor.Models
 @using Microsoft.JSInterop
 @implements IDisposable
 
@@ -114,7 +115,7 @@
         border: 1px solid #444c56;
         color: #adbac7;
         padding: 0.5rem 1rem;
-        border-radius: 20px;
+        border-radius: 8px;
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
@@ -165,28 +166,28 @@
     {
         <div class="job-card">
             <div class="job-header">
-                <a class="job-id-link" href="@($"/hangfire/jobs/details/{job.Id}")">#@job.Id</a>
-                <span class="status-badge @job.State.ToLower()">@job.State</span>
+                <a class="job-id-link" href="@($"/hangfire/jobs/details/{job.JobContext.Id}")" title="Job Id">#@job.JobContext.Id</a>
+                <span class="status-badge @job.JobContext.State.ToLower()" title="Last state">@job.JobContext.State</span>
                 <div class="job-title">
-                    <span>@job.JobName</span>
-                    <span class="queue-tag">@job.Queue</span>
+                    <span title="Job Name">@job.JobContext.JobName</span>
+                    <span class="queue-tag" title="Job queue">@job.JobContext.Queue</span>
                 </div>
-                <span class="job-created-at">@job.CreatedAt.ToLocalTime()</span>
+                <span class="job-created-at" title="Created At (Browser Time)">@job.JobContext.CreatedAt.ToOffset(_browserTimeSpan).LocalDateTime</span>
             </div>
 
             <!-- В карточке задачи -->
             <div class="comments-container">
-                @if (!string.IsNullOrEmpty(job.ExceptionMessage))
+                @if (!string.IsNullOrEmpty(job.JobContext.ExceptionMessage))
                 {
-                    <div class="comment-tag exception-tag">
-                        <span>@job.ExceptionType:</span>
-                        <span>@job.ExceptionMessage</span>
+                    <div class="comment-tag exception-tag" title="Exception">
+                        <span>@job.JobContext.ExceptionType:</span>
+                        <span>@job.JobContext.ExceptionMessage</span>
                     </div>
                 }
 
-                @foreach (var param in GetVisibleParams(job))
+                @foreach (var param in GetVisibleParams(job.JobContext))
                 {
-                    <div class="comment-tag">
+                    <div class="comment-tag" title="@param.Key">
                         <span>@param.Key:</span>
                         <span class="tag-value">@FormatJsonValue(param.Value)</span>
                     </div>
@@ -194,28 +195,28 @@
             </div>
 
             <button class="toggle-details-btn" @onclick="@(() => ToggleDetails(job))">
-                <span>@(_expandedJobs.ContainsKey(job.Id) ? "Expand" : "Collapse")</span>
-                <i class="bi bi-chevron-down toggle-icon @(_expandedJobs.ContainsKey(job.Id) ? "expanded" : "")"></i>
+                <span>@(job.Expanded ? "Expand" : "Collapse")</span>
+                <i class="bi bi-chevron-down toggle-icon @(job.Expanded ? "expanded" : "")"></i>
             </button>
 
-            @if (_expandedJobs.ContainsKey(job.Id))
+            @if (job.Expanded)
             {
                 <div class="details-panel">
                     <h4>Arguments</h4>
                     <div class="json-preview">
-                        <pre>@PrettyPrintJson(job.Args.RootElement)</pre>
+                        <pre>@PrettyPrintJson(job.JobContext.Args?.RootElement)</pre>
                     </div>
 
                     <h4>Parameters</h4>
                     <div class="json-preview">
-                        <pre>@PrettyPrintJson(job.Params.RootElement)</pre>
+                        <pre>@PrettyPrintJson(job.JobContext.Params?.RootElement)</pre>
                     </div>
 
-                    @if (job.StateData != null)
+                    @if (job.JobContext.StateData != null)
                     {
                         <h4>State</h4>
                         <div class="json-preview">
-                            <pre>@PrettyPrintJson(job.StateData.RootElement)</pre>
+                            <pre>@PrettyPrintJson(job.JobContext.StateData.RootElement)</pre>
                         </div>
                     }
                 </div>
@@ -257,7 +258,7 @@
     [Parameter]
     public IEnumerable<JobContext> Items { get; set; }
 
-    private List<JobContext> _items = [];
+    private List<JobModel> _items = [];
 
     [Parameter]
     public Func<Task<IEnumerable<JobContext>>> LoadMoreItems { get; set; }
@@ -266,13 +267,22 @@
     public ICollection<string> ShowJobParams { get; set; } = [];
 
     [Inject]
-    public IJSRuntime JsRuntime { get; set; }
+    public IJSRuntime JsRuntime { get; set; } = null!;
 
-    private Dictionary<long, bool> _expandedJobs = new();
+    [Inject]
+    public BrowserTimeService BrowserTimeService { get; set; } = null!;
+
     private ElementReference _intersectionObserverTargetElement;
     private bool _isLoadingMore;
     private bool _notMoreItems;
+    private TimeSpan _browserTimeSpan;
     private DotNetObjectReference<JobsViewer>? _dotNetObjectReference;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _browserTimeSpan = await BrowserTimeService.GetBrowserOffsetAsync();
+        await base.OnInitializedAsync();
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -286,7 +296,7 @@
             Items = [];
         }
 
-        _items = Items?.ToList() ?? [];
+        _items = Items?.Select(x => new JobModel(x)).ToList() ?? [];
 
         await base.OnParametersSetAsync();
         StateHasChanged();
@@ -320,7 +330,7 @@
                 return;
             }
 
-            _items.AddRange(moreItems);
+            _items.AddRange(moreItems.Select(x => new JobModel(x)));
         }
         finally
         {
@@ -341,16 +351,9 @@
         return element.ToString();
     }
 
-    private void ToggleDetails(JobContext job)
+    private void ToggleDetails(JobModel job)
     {
-        if (_expandedJobs.ContainsKey(job.Id))
-        {
-            _expandedJobs.Remove(job.Id);
-        }
-        else
-        {
-            _expandedJobs[job.Id] = true;
-        }
+        job.Expanded = !job.Expanded;
     }
 
     private static JsonSerializerOptions SerializerOptions = new()
@@ -359,7 +362,7 @@
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
-    private string PrettyPrintJson(JsonElement element)
+    private string PrettyPrintJson(JsonElement? element)
     {
         return JsonSerializer.Serialize(element, SerializerOptions);
     }

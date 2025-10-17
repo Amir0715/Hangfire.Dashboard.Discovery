@@ -15,8 +15,16 @@
     }
 </style>
 
+<Drawer @bind-Open="@_drawerIsOpened" Title="Help" Width="700px">
+    <HelpText/>
+</Drawer>
+
 <div class="mb-2">
     <div class="d-flex gap-1 toolbar">
+        <Button OnClick="@(() => _drawerIsOpened = true)">
+            <i class="bi bi-info"></i>
+        </Button>
+
         <QueryInput Class="flex-shrink-1 flex-grow-0" @bind-Query="@_timePaginationQuery.Data.QueryString"/>
         <div style="min-width: 250px;">
             <SimpleTimeRangePicker @bind-DateTimeRange="@_dateTimeRange"/>
@@ -64,12 +72,13 @@
 
     [Inject]
     private IJobProvider JobProvider { get; set; }
-    
+
     [Inject]
     private IOptions<HangfireDiscoveryOptions> HangfireDiscoveryOptions { get; set; }
 
     private HashSet<string> _allJobParams = [];
     private ICollection<string> _showJobParams = [];
+    private bool _drawerIsOpened;
 
     protected override void OnInitialized()
     {

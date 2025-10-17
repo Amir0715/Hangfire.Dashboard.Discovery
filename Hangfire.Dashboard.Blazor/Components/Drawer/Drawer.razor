@@ -1,0 +1,131 @@
+<style>
+    .panel {
+        background: #2d333b;
+        border: 1px solid #444c56;
+        border-radius: 6px;
+        padding: 0.5rem;
+    }
+
+    .drawer-container {
+        position: fixed;
+        top: 20px;
+        right: 0;
+        bottom: 20px;
+        width: @Width;
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 100;
+    }
+
+    .drawer-container.open {
+        transform: translateX(-20px);
+    }
+
+    .drawer-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+        pointer-events: none;
+        z-index: 99;
+    }
+
+    .drawer-overlay.open {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .drawer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #444c56;
+    }
+
+    .drawer-title {
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 3px;
+    }
+
+    .close-btn:hover {
+        background: #444c56;
+    }
+
+    .drawer-content {
+        height: calc(100% - 60px);
+        overflow-y: auto;
+        padding-right: 0.25rem;
+    }
+
+    /* Стили для скроллбара */
+    .drawer-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .drawer-content::-webkit-scrollbar-track {
+        background: #444c56;
+        border-radius: 3px;
+    }
+
+    .drawer-content::-webkit-scrollbar-thumb {
+        background: #768390;
+        border-radius: 3px;
+    }
+
+    .drawer-content::-webkit-scrollbar-thumb:hover {
+        background: #8b9bb0;
+    }
+</style>
+
+<div class="drawer-overlay @(Open ? "open" : "")" @onclick="Close"></div>
+<div class="drawer-container @(Open ? "open" : "")" style="width: @Width">
+    <div class="drawer panel" style="height: 100%;">
+        <div class="drawer-header">
+            <h3 class="drawer-title">@Title</h3>
+            <button class="close-btn" @onclick="Close">✕</button>
+        </div>
+        <div class="drawer-content">
+            @ChildContent
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public bool Open { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public string Title { get; set; } = "Drawer";
+
+    [Parameter]
+    public string Width { get; set; } = "400px";
+
+    private void Close()
+    {
+        Open = false;
+        OpenChanged.InvokeAsync(Open);
+    }
+
+}

@@ -8,6 +8,7 @@ using Hangfire.Dashboard.Blazor.Core.Validators;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Hangfire.Dashboard.Blazor;
 
@@ -20,6 +21,9 @@ public static class DependencyInjection
         services.AddScoped<ITokenizer, Tokenizer>();
         services.AddScoped<IJobProvider, JobProvider>();
         services.AddScoped<IExpressionGenerator, ExpressionGenerator>();
+        
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<BrowserTimeService>();
         
         services.AddRazorComponents()
             .AddInteractiveServerComponents();

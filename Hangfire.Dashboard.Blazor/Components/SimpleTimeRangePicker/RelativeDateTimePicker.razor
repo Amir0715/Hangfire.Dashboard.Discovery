@@ -21,31 +21,41 @@
     }
 
     input[type=number] {
-        -moz-appearance:textfield; /* Firefox */
+        -moz-appearance: textfield; /* Firefox */
     }
-    
+
 </style>
 
 <div class="relative-picker">
-    <input type="number" 
+    <input type="number"
            class="number-input"
            min="1"
            @bind="_amount"
-           @bind:event="oninput" />
-    <Dropdown TItem="TimeUnit" @bind-SelectedItem="_unit" Items="@(Enum.GetValues<TimeUnit>())" />
+           @bind:event="oninput"/>
+    <Dropdown TItem="TimeUnit" SelectedItem="@_unit" SelectedItemChanged="UpdateRelativeStart" Items="@(Enum.GetValues<TimeUnit>())"/>
 </div>
 
 @code {
-    [Parameter] public DateTimeOffset? RelativeStart { get; set; }
-    [Parameter] public EventCallback<DateTimeOffset?> RelativeStartChanged { get; set; }
 
+    [Parameter]
+    public DateTimeOffset? RelativeStart { get; set; }
+
+    [Parameter]
+    public EventCallback<DateTimeOffset?> RelativeStartChanged { get; set; }
+
+    [Inject]
+    public BrowserTimeService BrowserTimeService { get; set; } = null!;
+    
     private int _amount = 1;
-    private TimeUnit _unit = TimeUnit.Day;
+    private TimeUnit _unit = TimeUnit.Hour;
 
-    private async Task UpdateRelativeStart()
+    private async Task UpdateRelativeStart(TimeUnit unit)
     {
-        var now = DateTimeOffset.Now;
-        var newStart = _unit switch {
+        var now = await BrowserTimeService.BrowserNowAsync();
+        _unit = unit;
+        var newStart = _unit switch
+        {
+            TimeUnit.Minute => now.AddMinutes(-_amount),
             TimeUnit.Hour => now.AddHours(-_amount),
             TimeUnit.Day => now.AddDays(-_amount),
             TimeUnit.Month => now.AddMonths(-_amount),
@@ -55,5 +65,12 @@
         await RelativeStartChanged.InvokeAsync(newStart);
     }
 
-    private enum TimeUnit { Hour, Day, Month }
+    private enum TimeUnit
+    {
+        Minute,
+        Hour,
+        Day,
+        Month
+    }
+
 }

@@ -1,0 +1,60 @@
+<div id="help" style="font-size: 12pt;">
+    <h1 id="hql---hangfire-query-language">HQL - Hangfire Query Language</h1>
+    <h2 id="query-syntax">Query Syntax</h2>
+    <code>[field] [operator] [value]</code>
+    <p>Or reverse order:</p>
+    <code>[value] [operator] [field]</code>
+    <h2 id="operators">Operators</h2>
+    <p>
+        <code>==</code> - equality<br/>
+        <code>!=</code> - inequality<br/>
+        <code>&gt;</code> - greater than<br/>
+        <code>&gt;=</code> - greater than or equal<br/>
+        <code>&amp;lt;</code> - less than<br/>
+        <code>&amp;lt;=</code> - less than or equal<br/>
+        <code>~=</code> - contains substring<br/>
+    </p>
+    <h2 id="logical-operators">Logical Operators</h2>
+    <p>
+        <code>&amp;&amp;</code> - logical AND<br/>
+        <code>||</code> - logical OR
+    </p>
+    <h2 id="grouping">Grouping</h2>
+    <p>Use parentheses for grouping conditions:</p>
+    <code>([condition1]) || [condition2]</code>
+    <h2 id="value-types">Value Types</h2>
+    <ul>
+        <li>Strings: enclosed in quotes (&quot;string&quot;)</li>
+        <li>Numbers: without quotes (3.5)</li>
+        <li>Dates: ISO 8601 format in quotes (&quot;2025-05-29T12:00:00Z&quot;)</li>
+    </ul>
+    <h2 id="supported-fields">Supported Fields</h2>
+    <ul>
+        <li>Method</li>
+        <li>State</li>
+        <li>Id</li>
+        <li>Queue</li>
+        <li>Type</li>
+        <li>Args (with nested fields using dot notation, e.g., Args.name, Args.customer.id)</li>
+        <li>CreatedAt</li>
+        <li>ExpireAt</li>
+    </ul>
+    <h2 id="examples">Examples</h2>
+    <h3 id="search-by-job-type">Search by job type:</h3>
+    <code>Type == &quot;ScheduleEventHandleJob&quot;</code>
+    <h3 id="search-by-creation-date">Search by creation date:</h3>
+    <code>CreatedAt &gt;= 2025-05-29T12:00:00Z</code>
+    <h3 id="search-by-argument-value">Search by argument value:</h3>
+    <code>Args.name == &quot;ScheduleEventHandleJob&quot;</code>
+    <h3 id="search-by-numeric-argument">Search by numeric argument:</h3>
+    <code>Args.Number &gt;= 5.1</code>
+    <h3 id="search-by-date-in-arguments">Search by date in arguments:</h3>
+    <code>Args.CreatedAt &amp;lt; &quot;2025-05-28T13:00:00Z&quot;</code>
+    <h3 id="combined-conditions">Combined conditions:</h3>
+    <code>(Type == &quot;ScheduleEventHandleJob&quot;) || Type == &quot;ScheduleEventHandleJob2&quot;</code>
+    <h3 id="using-contains-operator">Using contains operator:</h3>
+    <code>Type ~= &quot;2&quot;</code>
+    <h3 id="advanced-json-querying">Advanced JSON Querying</h3>
+    <p>Access nested properties in JSON arguments using dot notation:</p>
+    <code>Args.customer.id == &quot;12345&quot;</code>
+</div>
