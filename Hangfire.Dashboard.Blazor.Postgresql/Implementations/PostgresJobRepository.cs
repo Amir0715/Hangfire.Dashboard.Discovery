@@ -72,9 +72,9 @@ public class PostgresJobRepository : IJobRepository
                 job => job.CreatedAt <= searchQuery.EndDateTimeOffset!.Value.UtcDateTime);
 
         var jobs = await q
-            .WhereIf(query is { Offset: not null, Direction: TimePaginationDirection.Newer },
+            .WhereIf(query is { Offset: not null, Direction: TimePaginationDirection.OldestFirst },
                 job => job.CreatedAt >= query.Offset)
-            .WhereIf(query is { Offset: not null, Direction: TimePaginationDirection.Older },
+            .WhereIf(query is { Offset: not null, Direction: TimePaginationDirection.NewestFirst },
                 job => job.CreatedAt <= query.Offset)
             .OrderByTimeDirection(x => x.CreatedAt, query.Direction)
             .Take(query.Limit)
@@ -83,8 +83,8 @@ public class PostgresJobRepository : IJobRepository
         var total = await q.CountAsync(cancellationToken);
         var nextOffset = query.Direction switch
         {
-            TimePaginationDirection.Newer => jobs.MaxBy(d => d.CreatedAt)?.CreatedAt,
-            TimePaginationDirection.Older => jobs.MinBy(d => d.CreatedAt)?.CreatedAt,
+            TimePaginationDirection.OldestFirst => jobs.MaxBy(d => d.CreatedAt)?.CreatedAt,
+            TimePaginationDirection.NewestFirst => jobs.MinBy(d => d.CreatedAt)?.CreatedAt,
             _ => throw new ArgumentOutOfRangeException(nameof(query), "Provided not supported sort direction")
         };
         return new TimePaginationResult<JobContext>(jobs, nextOffset, query.Limit, total);

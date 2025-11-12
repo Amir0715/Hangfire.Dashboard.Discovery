@@ -48,6 +48,6 @@ public class TimePaginationQuery
 
 public enum TimePaginationDirection
 {
-    Older,
-    Newer
+    NewestFirst,
+    OldestFirst
 }

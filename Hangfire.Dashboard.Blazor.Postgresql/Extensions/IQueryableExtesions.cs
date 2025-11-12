@@ -28,8 +28,8 @@ public static class IQueryableExtesions
     {
         return direction switch
         {
-            TimePaginationDirection.Newer => queryable.OrderBy(keySelector),
-            TimePaginationDirection.Older => queryable.OrderByDescending(keySelector),
+            TimePaginationDirection.OldestFirst => queryable.OrderBy(keySelector),
+            TimePaginationDirection.NewestFirst => queryable.OrderByDescending(keySelector),
             _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, null)
         };
     }

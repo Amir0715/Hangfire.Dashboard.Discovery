@@ -60,7 +60,7 @@
     private TimePaginationQuery<QueryDto> _timePaginationQuery = new()
     {
         Data = new QueryDto(),
-        Direction = TimePaginationDirection.Older
+        Direction = TimePaginationDirection.NewestFirst
     };
 
     private ICollection<TimePaginationDirection> _sortDirections = Enum.GetValues<TimePaginationDirection>();
