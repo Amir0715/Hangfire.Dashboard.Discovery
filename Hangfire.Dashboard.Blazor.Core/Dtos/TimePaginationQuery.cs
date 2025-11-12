@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel;
 
 namespace Hangfire.Dashboard.Blazor.Core.Dtos;
 
@@ -20,7 +19,10 @@ public class TimePaginationQuery<T> : TimePaginationQuery
 
 public class TimePaginationQuery
 {
-    public ListSortDirection Direction { get; set; }
+    /// <summary>
+    /// Time direction for paginating
+    /// </summary>
+    public TimePaginationDirection Direction { get; set; }
 
     /// <summary>
     /// Data Time will be less than TargetTime
@@ -42,4 +44,10 @@ public class TimePaginationQuery
     public TimePaginationQuery()
     {
     }
+}
+
+public enum TimePaginationDirection
+{
+    Older,
+    Newer
 }

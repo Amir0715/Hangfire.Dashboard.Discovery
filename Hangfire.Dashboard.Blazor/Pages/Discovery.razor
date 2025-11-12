@@ -1,5 +1,4 @@
 @page "/_hangfireBlazorDiscovery"
-@using System.ComponentModel
 @using Hangfire.Dashboard.Blazor.Core.Abstractions
 @using Hangfire.Dashboard.Blazor.Core.Dtos
 @using Hangfire.Dashboard.Blazor.Components.TagSelector
@@ -25,12 +24,12 @@
             <i class="bi bi-info"></i>
         </Button>
 
-        <QueryInput Class="flex-shrink-1 flex-grow-0" @bind-Query="@_timePaginationQuery.Data.QueryString"
+        <QueryInput Class="flex-shrink-1 flex-grow-0" Query="@_timePaginationQuery.Data.QueryString"
                     @ref="@_queryInput"/>
         <div style="min-width: 250px;">
             <SimpleTimeRangePicker DateTimeRange="@_dateTimeRange" DateTimeRangeChanged="DateTimeRangeChanged"/>
         </div>
-        <Button OnClick="SearchJobsAsync" IsLoading="@_isLoading">Run</Button>
+        <Button OnClick="@SearchJobsAsync" IsLoading="@_isLoading">Run</Button>
     </div>
     <div class="d-flex toolbar justify-content-between mt-3 align-items-baseline">
         @if (!(_lastPaginationResult?.IsSuccess ?? true))
@@ -47,7 +46,7 @@
             NoItemsPlaceholder="No available job parameters. Change query and get more job."/>
 
         <Dropdown Items="@_sortDirections"
-                  TItem="ListSortDirection"
+                  TItem="TimePaginationDirection"
                   SelectedItem="@_timePaginationQuery.Direction"
                   SelectedItemChanged="@ResetAndLoad"/>
     </div>
@@ -61,10 +60,10 @@
     private TimePaginationQuery<QueryDto> _timePaginationQuery = new()
     {
         Data = new QueryDto(),
-        Direction = ListSortDirection.Descending
+        Direction = TimePaginationDirection.Older
     };
 
-    private ICollection<ListSortDirection> _sortDirections = Enum.GetValues<ListSortDirection>();
+    private ICollection<TimePaginationDirection> _sortDirections = Enum.GetValues<TimePaginationDirection>();
 
     private Result<TimePaginationResult<JobContext>>? _lastPaginationResult;
     private DateTimeRange _dateTimeRange = new();
@@ -96,6 +95,7 @@
 
     private async Task SearchJobsAsync()
     {
+        _timePaginationQuery.Data.QueryString = await _queryInput.GetQueryValue();
         _timePaginationQuery.Data.StartDateTimeOffset = _dateTimeRange.StartDateTime;
         _timePaginationQuery.Data.EndDateTimeOffset = _dateTimeRange.EndDateTime;
         _isLoading = true;
@@ -133,7 +133,7 @@
         return [];
     }
 
-    private Task ResetAndLoad(ListSortDirection newDirection)
+    private Task ResetAndLoad(TimePaginationDirection newDirection)
     {
         _timePaginationQuery.Direction = newDirection;
         _timePaginationQuery.Offset = null;
@@ -154,6 +154,6 @@
             EndDateTimeOffset = _dateTimeRange.EndDateTime
         });
 
-        await _queryInput.SetValueHints(hints);
+        await _queryInput.SetValueHintAsync(hints);
     }
 }

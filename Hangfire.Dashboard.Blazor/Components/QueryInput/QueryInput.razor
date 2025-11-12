@@ -299,11 +299,13 @@
         window.addEventListener('resize', () => {
             editor.layout();
         });
+        
+        return editor;
     }
 </script>
 
 @code {
-    private IJSObjectReference? _monacoModule;
+    private IJSObjectReference? _monacoEditor;
 
     [Parameter]
     public string Class { get; set; } = null!;
@@ -311,15 +313,21 @@
     [Parameter]
     public string Query { get; set; } = null!;
 
-    [Parameter]
-    public EventCallback<string> QueryChanged { get; set; }
-
     [Inject]
     private IJSRuntime JsRuntime { get; set; } = null!;
 
-    public async Task SetValueHints(JobHints hints)
+    public async Task SetValueHintAsync(JobHints hints)
     {
         await JsRuntime.InvokeVoidAsync("updateValueSuggests", hints);
+    }
+
+    public async Task<string> GetQueryValue()
+    {
+        if (_monacoEditor == null) 
+            return string.Empty;
+        
+        var query = await _monacoEditor.InvokeAsync<string>("getValue");
+        return query;
     }
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -330,26 +338,20 @@
         {
             try
             {
-                await JsRuntime.InvokeVoidAsync("initializeMonaco");
+                _monacoEditor = await JsRuntime.InvokeAsync<IJSObjectReference>("initializeMonaco");
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                // ignored
             }
         }
     }
 
-    private async Task OnModelContentChanged(string value)
-    {
-        Query = value;
-        await QueryChanged.InvokeAsync(value);
-    }
-
     public async ValueTask DisposeAsync()
     {
-        if (_monacoModule != null)
+        if (_monacoEditor != null)
         {
-            await _monacoModule.DisposeAsync();
+            await _monacoEditor.DisposeAsync();
         }
     }
 }

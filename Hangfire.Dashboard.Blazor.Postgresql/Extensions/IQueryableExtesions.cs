@@ -1,6 +1,6 @@
-using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
+using Hangfire.Dashboard.Blazor.Core.Dtos;
 
 namespace Hangfire.Dashboard.Blazor.Postgresql.Extensions;
 
@@ -24,12 +24,12 @@ public static class IQueryableExtesions
     }
     
     [Pure]
-    public static IQueryable<T> OrderByDirection<T, TKey>(this IQueryable<T> queryable, Expression<Func<T, TKey>> keySelector, ListSortDirection direction)
+    public static IQueryable<T> OrderByTimeDirection<T, TKey>(this IQueryable<T> queryable, Expression<Func<T, TKey>> keySelector, TimePaginationDirection direction)
     {
         return direction switch
         {
-            ListSortDirection.Ascending => queryable.OrderBy(keySelector),
-            ListSortDirection.Descending => queryable.OrderByDescending(keySelector),
+            TimePaginationDirection.Newer => queryable.OrderBy(keySelector),
+            TimePaginationDirection.Older => queryable.OrderByDescending(keySelector),
             _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, null)
         };
     }

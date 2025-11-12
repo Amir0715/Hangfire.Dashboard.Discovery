@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using Hangfire.Dashboard.Blazor.Core;
 using Hangfire.Dashboard.Blazor.Core.Abstractions;
 using Hangfire.Dashboard.Blazor.Core.Dtos;
@@ -60,39 +59,38 @@ public class PostgresJobRepository : IJobRepository
                           """;
     }
 
-    public async Task<TimePaginationResult<JobContext>> SearchAsync(TimePaginationQuery<SearchQuery> timePagination)
+    public async Task<TimePaginationResult<JobContext>> SearchAsync(TimePaginationQuery<SearchQuery> query, CancellationToken cancellationToken = default)
     {
-        var query = timePagination.Data;
-        var queryExpression = query.QueryExpression;
+        var searchQuery = query.Data;
+        var queryExpression = searchQuery.QueryExpression;
 
         var q = _postgresqlContext.Database
             .SqlQueryRaw<JobContext>(_jobContextSql)
             .Where(queryExpression)
-            .Where(job => job.CreatedAt >= query.StartDateTimeOffset.UtcDateTime)
-            .WhereIf(query.EndDateTimeOffset.HasValue,
-                job => job.CreatedAt <= query.EndDateTimeOffset!.Value.UtcDateTime);
+            .Where(job => job.CreatedAt >= searchQuery.StartDateTimeOffset.UtcDateTime)
+            .WhereIf(searchQuery.EndDateTimeOffset.HasValue,
+                job => job.CreatedAt <= searchQuery.EndDateTimeOffset!.Value.UtcDateTime);
 
         var jobs = await q
-            .WhereIf(timePagination is { Offset: not null, Direction: ListSortDirection.Ascending },
-                job => job.CreatedAt >= timePagination.Offset)
-            .WhereIf(timePagination is { Offset: not null, Direction: ListSortDirection.Descending },
-                job => job.CreatedAt <= timePagination.Offset)
-            .OrderByDirection(x => x.CreatedAt, timePagination.Direction)
-            .Take(timePagination.Limit)
-            .ToListAsync();
+            .WhereIf(query is { Offset: not null, Direction: TimePaginationDirection.Newer },
+                job => job.CreatedAt >= query.Offset)
+            .WhereIf(query is { Offset: not null, Direction: TimePaginationDirection.Older },
+                job => job.CreatedAt <= query.Offset)
+            .OrderByTimeDirection(x => x.CreatedAt, query.Direction)
+            .Take(query.Limit)
+            .ToListAsync(cancellationToken);
 
-        var total = await q.CountAsync();
-        var nextOffset = timePagination.Direction switch
+        var total = await q.CountAsync(cancellationToken);
+        var nextOffset = query.Direction switch
         {
-            ListSortDirection.Ascending => jobs.MaxBy(d => d.CreatedAt)?.CreatedAt,
-            ListSortDirection.Descending => jobs.MinBy(d => d.CreatedAt)?.CreatedAt,
-            _ => throw new ArgumentOutOfRangeException(nameof(timePagination.Direction),
-                "Provided not supported sort direction")
+            TimePaginationDirection.Newer => jobs.MaxBy(d => d.CreatedAt)?.CreatedAt,
+            TimePaginationDirection.Older => jobs.MinBy(d => d.CreatedAt)?.CreatedAt,
+            _ => throw new ArgumentOutOfRangeException(nameof(query), "Provided not supported sort direction")
         };
-        return new TimePaginationResult<JobContext>(jobs, nextOffset, timePagination.Limit, total);
+        return new TimePaginationResult<JobContext>(jobs, nextOffset, query.Limit, total);
     }
 
-    public async Task<JobHints> GetHintsAsync(IntervalQuery query, CancellationToken cancellationToken)
+    public async Task<JobHints> GetHintsAsync(IntervalQuery query, CancellationToken cancellationToken = default)
     {
         // TODO: Точно нужен кэш
         var schema = _postgreSqlStorageOptions.SchemaName;

@@ -6,7 +6,7 @@ namespace Hangfire.Dashboard.Blazor.Core.Abstractions;
 
 public interface IJobRepository
 {
-    public Task<TimePaginationResult<JobContext>> SearchAsync(TimePaginationQuery<SearchQuery> query);
+    public Task<TimePaginationResult<JobContext>> SearchAsync(TimePaginationQuery<SearchQuery> query, CancellationToken cancellationToken = default);
 
-    public Task<JobHints> GetHintsAsync(IntervalQuery query, CancellationToken cancellationToken);
+    public Task<JobHints> GetHintsAsync(IntervalQuery query, CancellationToken cancellationToken = default);
 }

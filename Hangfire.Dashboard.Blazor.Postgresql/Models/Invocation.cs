@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace Hangfire.Dashboard.Blazor.Postgresql.Models;
 
 public class Invocation

@@ -6,7 +6,6 @@ using FluentValidation;
 using Hangfire.Dashboard.Blazor.Core.Abstractions;
 using Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 using Hangfire.Dashboard.Blazor.Core.Dtos;
-using Hangfire.Dashboard.Blazor.Core.Validators;
 
 namespace Hangfire.Dashboard.Blazor.Core.Services;
 
