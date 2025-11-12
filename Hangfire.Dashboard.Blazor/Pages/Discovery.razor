@@ -25,9 +25,10 @@
             <i class="bi bi-info"></i>
         </Button>
 
-        <QueryInput Class="flex-shrink-1 flex-grow-0" @bind-Query="@_timePaginationQuery.Data.QueryString"/>
+        <QueryInput Class="flex-shrink-1 flex-grow-0" @bind-Query="@_timePaginationQuery.Data.QueryString"
+                    @ref="@_queryInput"/>
         <div style="min-width: 250px;">
-            <SimpleTimeRangePicker @bind-DateTimeRange="@_dateTimeRange"/>
+            <SimpleTimeRangePicker DateTimeRange="@_dateTimeRange" DateTimeRangeChanged="DateTimeRangeChanged"/>
         </div>
         <Button OnClick="SearchJobsAsync" IsLoading="@_isLoading">Run</Button>
     </div>
@@ -71,20 +72,26 @@
     private IEnumerable<JobContext> _jobs = [];
 
     [Inject]
-    private IJobProvider JobProvider { get; set; }
+    private IJobProvider JobProvider { get; set; } = null!;
 
     [Inject]
-    private IOptions<HangfireDiscoveryOptions> HangfireDiscoveryOptions { get; set; }
+    private IHintProvider HintProvider { get; set; } = null!;
+
+    [Inject]
+    private IOptions<HangfireDiscoveryOptions> HangfireDiscoveryOptions { get; set; } = null!;
 
     private HashSet<string> _allJobParams = [];
     private ICollection<string> _showJobParams = [];
     private bool _drawerIsOpened;
+    private QueryInput _queryInput = null!;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         _dateTimeRange.StartDateTime = DateTimeOffset.UtcNow.Add(-HangfireDiscoveryOptions.Value.StartDateTimeOffsetByNow);
         _timePaginationQuery.Data.QueryString = HangfireDiscoveryOptions.Value.StartUpQuery;
-        base.OnInitialized();
+
+        await RefreshQueryHints();
+        await base.OnInitializedAsync();
     }
 
     private async Task SearchJobsAsync()
@@ -133,4 +140,20 @@
         return SearchJobsAsync();
     }
 
+    private Task DateTimeRangeChanged(DateTimeRange newDateTimeRange)
+    {
+        _dateTimeRange = newDateTimeRange;
+        return RefreshQueryHints();
+    }
+
+    private async Task RefreshQueryHints()
+    {
+        var hints = await HintProvider.GetHintsAsync(new IntervalQuery
+        {
+            StartDateTimeOffset = _dateTimeRange.StartDateTime,
+            EndDateTimeOffset = _dateTimeRange.EndDateTime
+        });
+
+        await _queryInput.SetValueHints(hints);
+    }
 }

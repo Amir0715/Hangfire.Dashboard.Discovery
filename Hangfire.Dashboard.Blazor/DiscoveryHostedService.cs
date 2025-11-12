@@ -12,7 +12,8 @@ public class DashboardBackgroundService : BackgroundService
 
     public DashboardBackgroundService(
         IServiceProvider serviceProvider,
-        ILogger<DashboardBackgroundService> logger)
+        ILogger<DashboardBackgroundService> logger
+    )
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
@@ -23,7 +24,7 @@ public class DashboardBackgroundService : BackgroundService
         await using var scope = _serviceProvider.CreateAsyncScope();
 
         var processors = scope.ServiceProvider.GetServices<IDashboardBackgroundProcessor>();
-        
+
         // Создаем отдельные задачи для каждого процессора
         var processorTasks = processors
             .Select(processor => ProcessSingleProcessor(processor, stoppingToken))
@@ -33,11 +34,12 @@ public class DashboardBackgroundService : BackgroundService
     }
 
     private async Task ProcessSingleProcessor(
-        IDashboardBackgroundProcessor processor, 
-        CancellationToken stoppingToken)
+        IDashboardBackgroundProcessor processor,
+        CancellationToken stoppingToken
+    )
     {
         var processorName = processor.GetType().Name;
-        
+
         while (!stoppingToken.IsCancellationRequested)
         {
             var startTime = DateTime.UtcNow;
@@ -49,7 +51,7 @@ public class DashboardBackgroundService : BackgroundService
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                _logger.LogError(ex, 
+                _logger.LogError(ex,
                     "Error in dashboard processor {ProcessorName}", processorName);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

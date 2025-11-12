@@ -1,94 +1,355 @@
-@using Microsoft.Extensions.Options
+@using Hangfire.Dashboard.Blazor.Core.Abstractions
 @using Microsoft.JSInterop
+
+@implements IAsyncDisposable
+
 <div style="width: 100%;" class="@Class">
-    <StandaloneCodeEditor Id="my-code-editor" ConstructionOptions="EditorConstructionOptions" CssClass="w-100 h-100" OnDidChangeModelContent="OnModelContentChanged" @ref="@_editor"/>
+    <div id="container" class="w-100 h-100"></div>
 </div>
 
 <script>
-    window.initializeMonarch = () => {
-        monaco.languages.register({id: "jql"});
+    // Глобальный объект для хранения данных подсказок из бэкенда
+    window.hqlMonacoValueSuggests = {
+        states: [],
+        types: [],
+        methods: [],
+        queues: ["default"]
+    };
 
-        // Register a tokens provider for the language
-        monaco.languages.setMonarchTokensProvider('jql', {
+    window.updateValueSuggests = (newValueSuggests) => {
+        window.hqlMonacoValueSuggests = {...window.hqlMonacoValueSuggests, ...newValueSuggests};
+    }
+
+    window.initializeMonaco = () => {
+
+        console.log('Initializing Monaco Editor...');
+        
+        // Инициализация языка
+        monaco.languages.register({id: 'hql'});
+
+        monaco.languages.setMonarchTokensProvider('hql', {
+            keywords: [
+                'Method', 'State', 'Id', 'Queue', 'Type', 'Args', 'CreatedAt', 'ExpireAt'
+            ],
+
+            operators: [
+                '==', '!=', '>', '>=', '<', '<=', '~=', '&&', '||'
+            ],
+
             tokenizer: {
                 root: [
-                    [/\s+/, 'white'],
-                    [/\b(&&|\|\|)\b/, 'operator'],
-                    [/==|!=|>|<|>=|<=|~=/, 'operator'],
-                    [/\b[a-zA-Z_][a-zA-Z0-9_.]*\b/, 'keyword'],
+                    // Поля
+                    [/\b(Method|State|Id|Queue|Type|Args|CreatedAt|ExpireAt)\b/, 'keyword'],
+
+                    // Args с точечной нотацией
+                    [/\bArgs\.[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)*/, 'type'],
+
+                    // Операторы сравнения
+                    [/==|!=|>=|<=|>|<|~=/, 'operator'],
+
+                    // Логические операторы
+                    [/&&|\|\|/, 'operator'],
+
+                    // Числа (целые и с плавающей точкой)
+                    [/\d+\.\d+/, 'number'],
+                    [/\d+/, 'number'],
+
+                    // Строки в двойных кавычках
+                    [/"([^"\\]|\\.)*$/, 'string.invalid'],
                     [/"([^"\\]|\\.)*"/, 'string'],
-                    [/\b\d+(\.\d+)?\b/, 'number'],
-                    [/[()]/, 'bracket'],
-                    [/\/\/.*$/, 'comment']
+
+                    // Даты ISO 8601
+                    [/"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z"/, 'string.date'],
+
+                    // Скобки
+                    [/[()]/, 'delimiter'],
+
+                    // Пробелы
+                    [/\s+/, 'whiteSpace']
                 ]
             }
+        });
+
+        // Конфигурация автодополнения
+        monaco.languages.registerCompletionItemProvider('hql', {
+            triggerCharacters: [' ', '"', '=', '!', '>', '<', '~', '&', '|'],
+            provideCompletionItems: function (model, position, context) {
+                const word = model.getWordUntilPosition(position);
+                const range = {
+                    startLineNumber: position.lineNumber,
+                    endLineNumber: position.lineNumber,
+                    startColumn: word.startColumn,
+                    endColumn: word.endColumn
+                };
+
+                const textUntilPosition = model.getValue();
+
+                const suggestions = [];
+
+                // Базовые списки для автодополнения
+                const allFields = [
+                    {label: 'Id', detail: 'Идентификатор задачи', insertText: 'Id '},
+                    {label: 'Type', detail: 'Тип задачи', insertText: 'Type '},
+                    {label: 'Method', detail: 'Название метода', insertText: 'Method '},
+                    {label: 'State', detail: 'Состояние задачи', insertText: 'State '},
+                    {label: 'Queue', detail: 'Очередь', insertText: 'Queue '},
+                    {label: 'Args', detail: 'Аргументы задачи', insertText: 'Args '},
+                    {label: 'CreatedAt', detail: 'Время создания', insertText: 'CreatedAt '},
+                    {label: 'ExpireAt', detail: 'Время истечения', insertText: 'ExpireAt '}
+                ];
+
+                const equalOperators = [
+                    {label: '==', detail: 'Равно', insertText: '== '},
+                    {label: '!=', detail: 'Не равно', insertText: '!= '},
+                    {label: '>', detail: 'Больше', insertText: '> '},
+                    {label: '>=', detail: 'Больше или равно', insertText: '>= '},
+                    {label: '<', detail: 'Меньше', insertText: '< '},
+                    {label: '<=', detail: 'Меньше или равно', insertText: '<= '},
+                    {label: '~=', detail: 'Содержит подстроку', insertText: '~= '},
+                ]
+
+                const logicalOperators = [
+                    {label: '&&', detail: 'Логическое И', insertText: '&& '},
+                    {label: '||', detail: 'Логическое ИЛИ', insertText: '|| '}
+                ];
+                
+                const allOperators = [
+                    ...equalOperators,
+                    ...logicalOperators
+                ];
+
+                // Фильтрация по частичному вводу
+                const filterByWord = (items) => {
+                    if (!word.word) return items;
+                    return items.filter(item =>
+                        item.label.toLowerCase().includes(word.word.toLowerCase())
+                    );
+                };
+
+                // Определяем контекст
+                const fieldMatch = textUntilPosition.match(/(Method|State|Queue|Type)\s*(==|!=|~=|[<>]=?)\s*$/);
+                const operatorMatch = textUntilPosition.match(/\b(Method|State|Id|Queue|Type|Args|CreatedAt|ExpireAt)\s*$/);
+                const logicalOperatorMatch = textUntilPosition.match(/(&&|\|\|)\s*$/);
+                const startOfLine = textUntilPosition.trim() === '';
+                const afterFieldValue = textUntilPosition.match(/"[^"]*"\s*$/);
+                console.debug("fieldMatch ", fieldMatch);
+                console.debug("operatorMatch ", operatorMatch);
+                console.debug("logicalOperatorMatch ", logicalOperatorMatch);
+                console.debug("startOfLine ", startOfLine);
+                console.debug("afterFieldValue ", afterFieldValue);
+                console.debug("=============");
+                
+                if (fieldMatch) {
+                    // Контекст значения после оператора
+                    const fieldName = fieldMatch[1];
+                    let values = [];
+
+                    switch (fieldName) {
+                        case 'State':
+                            values = window.hqlMonacoValueSuggests.states;
+                            break;
+                        case 'Type':
+                            values = window.hqlMonacoValueSuggests.types;
+                            break;
+                        case 'Method':
+                            values = window.hqlMonacoValueSuggests.methods;
+                            break;
+                        case 'Queue':
+                            values = window.hqlMonacoValueSuggests.queues;
+                            break;
+                    }
+
+                    // Фильтруем значения по частичному вводу
+                    const filteredValues = word.word ?
+                        values.filter(value =>
+                            value.toLowerCase().includes(word.word.toLowerCase())
+                        ) : values;
+
+                    filteredValues.forEach(value => {
+                        suggestions.push({
+                            label: `"${value}"`,
+                            kind: monaco.languages.CompletionItemKind.Value,
+                            detail: `${fieldName} value`,
+                            insertText: `"${value}"`,
+                            range: range
+                        });
+                    });
+
+                    // Добавляем общие шаблоны значений
+                    if (!word.word || '"'.includes(word.word)) {
+                        suggestions.push({
+                            label: '"string"',
+                            kind: monaco.languages.CompletionItemKind.Value,
+                            detail: 'String value',
+                            insertText: '"$0"',
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            range: range
+                        });
+                    }
+
+                } else if (operatorMatch) {
+                    // Контекст оператора после поля
+                    filterByWord(equalOperators).forEach(operator => {
+                        suggestions.push({
+                            label: operator.label,
+                            kind: monaco.languages.CompletionItemKind.Operator,
+                            detail: operator.detail,
+                            insertText: operator.insertText,
+                            range: range
+                        });
+                    });
+
+                } else if (logicalOperatorMatch || startOfLine) {
+                    // Контекст поля (начало строки, после логического оператора)
+                    filterByWord(allFields).forEach(field => {
+                        suggestions.push({
+                            label: field.label,
+                            kind: monaco.languages.CompletionItemKind.Field,
+                            detail: field.detail,
+                            insertText: field.insertText,
+                            range: range
+                        });
+                    });
+                } else if (afterFieldValue) {
+                    // Контекс логического оператора, предлогаем их добавления только после значения
+                    filterByWord(allOperators.filter(op => ['&&', '||'].includes(op.label))).forEach(operator => {
+                        suggestions.push({
+                            label: operator.label,
+                            kind: monaco.languages.CompletionItemKind.Operator,
+                            detail: operator.detail,
+                            insertText: operator.insertText,
+                            range: range
+                        });
+                    });
+                } else {
+                    // Общий случай - предлагаем всё отфильтрованное по текущему слову
+                    const filteredFields = filterByWord(allFields);
+                    const filteredOperators = filterByWord(allOperators);
+
+                    filteredFields.forEach(field => {
+                        suggestions.push({
+                            label: field.label,
+                            kind: monaco.languages.CompletionItemKind.Field,
+                            detail: field.detail,
+                            insertText: field.insertText,
+                            range: range
+                        });
+                    });
+
+                    filteredOperators.forEach(operator => {
+                        suggestions.push({
+                            label: operator.label,
+                            kind: monaco.languages.CompletionItemKind.Operator,
+                            detail: operator.detail,
+                            insertText: operator.insertText,
+                            range: range
+                        });
+                    });
+                }
+
+                return {suggestions: suggestions};
+            }
+        });
+
+        const editor = monaco.editor.create(document.getElementById('container'), {
+            automaticLayout: true,
+            value: `State == "Enqueued"`,
+            language: 'hql',
+            theme: 'vs-dark',
+            // Настройки для автоматического показа подсказок
+            suggestOnTriggerCharacters: true,
+            quickSuggestions: {
+                other: true,
+                comments: false,
+                strings: false
+            },
+            // Автоматически показывать подсказки при вводе
+            wordBasedSuggestions: 'currentDocument',
+            // Дополнительные настройки для лучшего UX
+            parameterHints: {
+                enabled: true
+            },
+            autoIndent: 'full',
+            formatOnType: true,
+            formatOnPaste: true,
+            lineNumbers: 'off',
+            matchOnWordStartOnly: false,
+            glyphMargin: false,
+            folding: false,
+            minimap: {
+                enabled: false
+            },
+            scrollbar: {
+                vertical: 'hidden'
+            },
+            overviewRulerLanes: 0,
+            renderLineHighlight: 'none',
+        });
+
+        /*
+        // Дополнительно: принудительно показывать подсказки при определенных событиях
+        editor.onDidChangeCursorPosition(() => {
+            // Небольшая задержка для стабильности
+            setTimeout(() => {
+                editor.trigger('', 'editor.action.triggerSuggest', {});
+            }, 100);
+        });
+        */
+
+        window.addEventListener('resize', () => {
+            editor.layout();
         });
     }
 </script>
 
 @code {
-    private StandaloneCodeEditor _editor;
+    private IJSObjectReference? _monacoModule;
 
     [Parameter]
-    public string Class { get; set; }
-    
+    public string Class { get; set; } = null!;
+
     [Parameter]
-    public string Query { get; set; }
+    public string Query { get; set; } = null!;
 
     [Parameter]
     public EventCallback<string> QueryChanged { get; set; }
-    
+
     [Inject]
     private IJSRuntime JsRuntime { get; set; } = null!;
 
-    private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
+    public async Task SetValueHints(JobHints hints)
     {
-        return new StandaloneEditorConstructionOptions
-        {
-            AutomaticLayout = true,
-            Language = "jql",
-            Theme = "vs-dark",
-            Value = Query,
-            Minimap = new EditorMinimapOptions
-            {
-                Enabled = false
-            },
-            LineNumbers = "off",
-            WordWrap = "on",
-            Scrollbar = new EditorScrollbarOptions()
-            {
-                Vertical = "hidden"
-            },
-            BracketPairColorization = new BracketPairColorizationOptions() { Enabled = true },
-            GlyphMargin = false,
-            Folding = false,
-            LineDecorationsWidth = 0,
-            LineNumbersMinChars = 0,
-            RoundedSelection = false,
-            OverviewRulerLanes = 0,
-            OverviewRulerBorder = false,
-            Padding = new EditorPaddingOptions()
-            {
-                Top = 5,
-                Bottom = 5
-            }
-        };
+        await JsRuntime.InvokeVoidAsync("updateValueSuggests", hints);
     }
-
+    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        await base.OnAfterRenderAsync(firstRender);
+
         if (firstRender)
         {
-            await JsRuntime.InvokeVoidAsync("initializeMonarch");
+            try
+            {
+                await JsRuntime.InvokeVoidAsync("initializeMonaco");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
-
-        await base.OnAfterRenderAsync(firstRender);
     }
 
-    private async Task OnModelContentChanged()
+    private async Task OnModelContentChanged(string value)
     {
-        var editorValue = await _editor.GetValue();
-        Query = editorValue;
-        await QueryChanged.InvokeAsync(editorValue);
+        Query = value;
+        await QueryChanged.InvokeAsync(value);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_monacoModule != null)
+        {
+            await _monacoModule.DisposeAsync();
+        }
     }
 }

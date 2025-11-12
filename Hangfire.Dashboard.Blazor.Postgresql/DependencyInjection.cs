@@ -13,7 +13,10 @@ namespace Hangfire.Dashboard.Blazor.Postgresql;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddHangfireDiscoveryWithPostgresStorage(this IServiceCollection services, Action<HangfireDiscoveryOptions> optionConfigure = null)
+    public static IServiceCollection AddHangfireDiscoveryWithPostgresStorage(
+        this IServiceCollection services,
+        Action<HangfireDiscoveryOptions> optionConfigure = null
+    )
     {
         services.AddHangfireBlazorDashboard(optionConfigure);
 
@@ -42,7 +45,7 @@ public static class DependencyInjection
 
             return postgreSqlStorageOptions;
         });
-        
+
         services.AddDbContext<HangfirePostgresqlContext>((sp, builder) =>
         {
             var jobStorage = sp.GetRequiredService<JobStorage>() as PostgreSqlStorage;
@@ -50,9 +53,14 @@ public static class DependencyInjection
             var connectionString = npgsqlConnectionFactory.ConnectionString.ToString();
 
             var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString).EnableDynamicJson();
-            builder.UseNpgsql(dataSourceBuilder.Build());
+            builder.UseNpgsql(dataSourceBuilder.Build())
+#if DEBUG
+                .EnableDetailedErrors()
+                .EnableSensitiveDataLogging()
+#endif
+                ;
         });
-        
+
         return services;
     }
 }

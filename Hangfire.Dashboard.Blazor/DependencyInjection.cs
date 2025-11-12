@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssemblyContaining(typeof(QueryValidator));
         services.AddScoped<ITokenizer, Tokenizer>();
         services.AddScoped<IJobProvider, JobProvider>();
+        services.AddScoped<IHintProvider, HintProvider>();
         services.AddScoped<IExpressionGenerator, ExpressionGenerator>();
         
         services.TryAddSingleton(TimeProvider.System);

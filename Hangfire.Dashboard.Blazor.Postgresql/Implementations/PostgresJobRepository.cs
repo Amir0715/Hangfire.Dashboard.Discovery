@@ -13,55 +13,60 @@ public class PostgresJobRepository : IJobRepository
 {
     private readonly PostgreSqlStorageOptions _postgreSqlStorageOptions;
     private readonly HangfirePostgresqlContext _postgresqlContext;
+    private readonly string _jobContextSql;
 
-    public PostgresJobRepository(PostgreSqlStorageOptions postgreSqlStorageOptions, HangfirePostgresqlContext postgresqlContext)
+    public PostgresJobRepository(
+        PostgreSqlStorageOptions postgreSqlStorageOptions,
+        HangfirePostgresqlContext postgresqlContext
+    )
     {
         _postgreSqlStorageOptions = postgreSqlStorageOptions;
         _postgresqlContext = postgresqlContext;
+
+        var schema = _postgreSqlStorageOptions.SchemaName;
+        _jobContextSql = $"""
+                          SELECT j.id AS "Id",
+                                 j.invocationdata ->> 'Type' AS "Type",
+                                 j.invocationdata ->> 'Method' AS "Method",
+                                 j.statename AS "State",
+                                 j.createdat AS "CreatedAt",
+                                 j.expireat AS "ExpireAt",
+                                 ds.value AS "Args",
+                          
+                            (SELECT s.data
+                             FROM {schema}.state AS s
+                             WHERE s.jobid = j.id
+                             ORDER BY s.createdat DESC
+                             LIMIT 1) AS "StateData",
+                          
+                            (SELECT jsonb_object_agg(name, btrim(value, '" ')) AS params_json
+                             FROM {schema}.jobparameter
+                             WHERE jobId = j.id) AS "Params",
+                                 (
+                                    (SELECT queue
+                                     FROM {schema}.jobqueue
+                                     WHERE jobid = j.id
+                                     ORDER BY createdat DESC
+                                     LIMIT 1)
+                                  UNION
+                                    (SELECT 'default')
+                                  LIMIT 1) AS "Queue"
+                          FROM {schema}.job AS j
+                          LEFT JOIN
+                            (SELECT substring(s.key FROM '\d+')::bigint AS jobId,
+                                    s.value::JSONB
+                             FROM {schema}."set" AS s
+                             WHERE s."key" like '{Constants.DiscoverySetKeyPrefix}:%') AS ds ON jobId = j.id
+                          """;
     }
 
     public async Task<TimePaginationResult<JobContext>> SearchAsync(TimePaginationQuery<SearchQuery> timePagination)
     {
-        var schema = _postgreSqlStorageOptions.SchemaName;
-        var sql = $"""
-                   SELECT j.id AS "Id",
-                          j.invocationdata ->> 'Type' AS "Type",
-                          j.invocationdata ->> 'Method' AS "Method",
-                          j.statename AS "State",
-                          j.createdat AS "CreatedAt",
-                          j.expireat AS "ExpireAt",
-                          ds.value AS "Args",
-                   
-                     (SELECT s.data
-                      FROM {schema}.state AS s
-                      WHERE s.jobid = j.id
-                      ORDER BY s.createdat DESC
-                      LIMIT 1) AS "StateData",
-                   
-                     (SELECT jsonb_object_agg(name, btrim(value, '" ')) AS params_json
-                      FROM {schema}.jobparameter
-                      WHERE jobId = j.id) AS "Params",
-                          (
-                             (SELECT queue
-                              FROM {schema}.jobqueue
-                              WHERE jobid = j.id
-                              ORDER BY createdat DESC
-                              LIMIT 1)
-                           UNION
-                             (SELECT 'default')
-                           LIMIT 1) AS "Queue"
-                   FROM {schema}.job AS j
-                   LEFT JOIN
-                     (SELECT substring(s.key FROM '\d+')::bigint AS jobId,
-                             s.value::JSONB
-                      FROM {schema}."set" AS s
-                      WHERE s."key" like '{Constants.DiscoverySetKeyPrefix}:%') AS ds ON jobId = j.id
-                   """;
         var query = timePagination.Data;
         var queryExpression = query.QueryExpression;
-            
+
         var q = _postgresqlContext.Database
-            .SqlQueryRaw<JobContext>(sql)
+            .SqlQueryRaw<JobContext>(_jobContextSql)
             .Where(queryExpression)
             .Where(job => job.CreatedAt >= query.StartDateTimeOffset.UtcDateTime)
             .WhereIf(query.EndDateTimeOffset.HasValue,
@@ -81,8 +86,65 @@ public class PostgresJobRepository : IJobRepository
         {
             ListSortDirection.Ascending => jobs.MaxBy(d => d.CreatedAt)?.CreatedAt,
             ListSortDirection.Descending => jobs.MinBy(d => d.CreatedAt)?.CreatedAt,
-            _ => throw new ArgumentOutOfRangeException(nameof(timePagination.Direction), "Provided not supported sort direction")
+            _ => throw new ArgumentOutOfRangeException(nameof(timePagination.Direction),
+                "Provided not supported sort direction")
         };
         return new TimePaginationResult<JobContext>(jobs, nextOffset, timePagination.Limit, total);
+    }
+
+    public async Task<JobHints> GetHintsAsync(IntervalQuery query, CancellationToken cancellationToken)
+    {
+        // TODO: Точно нужен кэш
+        var schema = _postgreSqlStorageOptions.SchemaName;
+        var jobContexts = await _postgresqlContext.Database
+            .SqlQueryRaw<JobContext>(
+                $"""
+                 with DiscoveryJobs as (SELECT j.id AS "Id",
+                        j.invocationdata ->> 'Type' AS "Type",
+                        j.invocationdata ->> 'Method' AS "Method",
+                        j.statename AS "State",
+                        j.createdat AS "CreatedAt",
+                        j.expireat AS "ExpireAt",
+                        ds.value AS "Args",
+                   (SELECT s.data
+                    FROM {schema}.state AS s
+                    WHERE s.jobid = j.id
+                    ORDER BY s.createdat DESC
+                    LIMIT 1) AS "StateData",
+                 
+                   (SELECT jsonb_object_agg(name, btrim(value, '" ')) AS params_json
+                    FROM {schema}.jobparameter
+                    WHERE jobId = j.id) AS "Params",
+                   (
+                           (SELECT queue
+                            FROM {schema}.jobqueue
+                            WHERE jobid = j.id
+                            ORDER BY createdat DESC
+                            LIMIT 1)
+                         UNION
+                           (SELECT 'default')
+                         LIMIT 1) AS "Queue"
+                 FROM {schema}.job AS j
+                 LEFT JOIN
+                   (SELECT substring(s.key FROM '\d+')::bigint AS jobId,
+                           s.value::JSONB
+                    FROM {schema}."set" AS s
+                    WHERE s."key" like '{Constants.DiscoverySetKeyPrefix}:%') AS ds ON jobId = j.id)
+                 select distinct on ("Type", "Method", "State") * from DiscoveryJobs
+                 """)
+            .WhereIf(query.EndDateTimeOffset.HasValue,
+                job => job.CreatedAt <= query.EndDateTimeOffset!.Value.UtcDateTime)
+            .Where(job => job.CreatedAt >= query.StartDateTimeOffset.UtcDateTime)
+            .ToListAsync(cancellationToken);
+        var types = jobContexts.Select(x => x.Type).Distinct().ToList();
+        var methods = jobContexts.Select(x => x.Method).Distinct().ToList();
+        var states = jobContexts.Select(x => x.State).Distinct().ToList();
+
+        return new JobHints
+        {
+            Types = types,
+            Methods = methods,
+            States = states
+        };
     }
 }
