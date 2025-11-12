@@ -296,6 +296,36 @@
         });
         */
 
+        // suppress enter key press
+
+        let isSettingValue = false;
+        editor.getModel().onDidChangeContent(() => {
+            if (isSettingValue) {
+                return;
+            }
+
+            const value = editor.getValue();
+            if (value.includes('\n')) {
+                isSettingValue = true;
+
+                const position = editor.getPosition();
+                const newValue = value.replace(/[\r\n]+/g, '');
+
+                editor.setValue(newValue);
+
+                if (position) {
+                    const newPosition = {
+                        lineNumber: 1,
+                        column: Math.min(position.column, newValue.length + 1)
+                    };
+                    editor.setPosition(newPosition);
+                }
+
+                isSettingValue = false;
+                
+            }
+        });
+
         window.addEventListener('resize', () => {
             editor.layout();
         });
