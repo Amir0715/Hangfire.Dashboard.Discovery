@@ -26,6 +26,16 @@
     --hd-drawer-transition: 0.3s ease-in-out;
     --hd-drawer-header-spacing: 1rem;
     --hd-drawer-scrollbar-width: 6px;
+
+    /* Dropdown */
+    --hd-dropdown-bg: #2d333b;
+    --hd-dropdown-border: #444c56;
+    --hd-dropdown-text: #adbac7;
+    --hd-dropdown-hover-border: #539bf5;
+    --hd-dropdown-arrow-color: #adbac7;
+    --hd-dropdown-radius: 4px;
+    --hd-dropdown-padding: 0.5rem 1rem;
+    --hd-dropdown-disabled-opacity: 0.6;
 }
 
 body {
