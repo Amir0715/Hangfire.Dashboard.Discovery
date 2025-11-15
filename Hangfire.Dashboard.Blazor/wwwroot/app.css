@@ -36,6 +36,15 @@
     --hd-dropdown-radius: 4px;
     --hd-dropdown-padding: 0.5rem 1rem;
     --hd-dropdown-disabled-opacity: 0.6;
+
+    /* TagSelector */
+    --hd-tag-selector-bg: #2d333b;
+    --hd-tag-selector-border: #444c56;
+    --hd-tag-selector-text: #adbac7;
+    --hd-tag-selector-hover-bg: #373e47;
+    --hd-tag-selector-accent: #539bf5;
+    --hd-tag-selector-radius: 4px;
+    --hd-tag-selector-tag-radius: 15px;
 }
 
 body {

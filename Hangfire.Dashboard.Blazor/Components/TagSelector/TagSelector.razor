@@ -1,104 +1,60 @@
-<div class="tag-selector">
-    <input type="text" 
-           class="tag-input"
-           placeholder="@Placeholder"
-           @oninput="@(e => SearchText = e.Value?.ToString())"
-           @onfocus="@(() => _showDropdown = true)"
-           @onblur="@HideDropdown"/>
-    
-    <div class="selected-tags">
-        @foreach (var tag in SelectedItems)
-        {
-            <div class="tag">
-                <span>@tag</span>
-                <button class="remove-btn" @onclick="@(() => RemoveTag(tag))">&times;</button>
-            </div>
-        }
-    </div>
-    
+<div class="tag-selector @(FullWidth ? "tag-selector--full" : "") @(Disabled ? "tag-selector--disabled" : "") @Class"
+     @onclick="FocusInput"
+     @onkeydown="HandleKeyDown"
+     role="combobox"
+     aria-expanded="@_showDropdown"
+     aria-haspopup="listbox">
+
+    @foreach (var tag in SelectedItems)
+    {
+        <div class="tag-selector__tag">
+            <span class="tag-selector__tag-text">@tag</span>
+            <button class="tag-selector__remove-btn"
+                    @onclick="@(() => RemoveTag(tag))"
+                    @onclick:stopPropagation="true"
+                    type="button"
+                    aria-label="Remove @tag">
+                &times;
+            </button>
+        </div>
+    }
+
+    <input @ref="_inputElement"
+           type="text"
+           class="tag-selector__input"
+           placeholder="@(SelectedItems.Any() ? "" : Placeholder)"
+           @bind="@_searchText"
+           @bind:event="oninput"
+           @onfocus="ShowDropdown"
+           @onblur="HideDropdown"
+           disabled="@Disabled" />
+
     @if (_showDropdown)
     {
-        <div class="tag-dropdown">
-            @if (FilteredTags.Count == 0)
+        <div class="tag-selector__dropdown"
+             role="listbox"
+             aria-label="Suggested tags">
+            
+            @if (!FilteredItems.Any())
             {
-                <div class="dropdown-item">@NoItemsPlaceholder</div>
-            }
-            @foreach (var tag in FilteredTags)
-            {
-                <div class="dropdown-item"
-                     @onmousedown="@(() => AddTag(tag))">
-                    @tag
+                <div class="tag-selector__empty-state">
+                    @NoItemsText
                 </div>
+            }
+            else
+            {
+                @foreach (var tag in FilteredItems)
+                {
+                    <div class="tag-selector__dropdown-item"
+                         role="option"
+                         @onmousedown="@(() => AddTag(tag))">
+                        @tag
+                    </div>
+                }
             }
         </div>
     }
 </div>
-
-<style>
-    .tag-selector {
-        position: relative;
-        width: 100%;
-        max-width: 600px;
-    }
-
-    .selected-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-    }
-
-    .tag {
-        background: #373e47;
-        border: 1px solid #444c56;
-        border-radius: 15px;
-        padding: 0.25rem 0.75rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.9rem;
-    }
-
-    .remove-btn {
-        background: none;
-        border: none;
-        color: #adbac7;
-        cursor: pointer;
-        padding: 0;
-        font-size: 1rem;
-        line-height: 1;
-    }
-
-    .tag-input {
-        width: 100%;
-        padding: 0.5rem;
-        background: #2d333b;
-        border: 1px solid #444c56;
-        border-radius: 4px;
-        color: #adbac7;
-    }
-
-    .tag-dropdown {
-        position: absolute;
-        width: 100%;
-        max-height: 200px;
-        overflow-y: auto;
-        background: #2d333b;
-        border: 1px solid #444c56;
-        border-radius: 4px;
-        z-index: 100;
-        margin-top: 0.25rem;
-    }
-
-    .dropdown-item {
-        padding: 0.5rem;
-        cursor: pointer;
-    }
-
-    .dropdown-item:hover {
-        background: #373e47;
-    }
-</style>
 
 @code {
     [Parameter]
@@ -111,43 +67,108 @@
     public EventCallback<ICollection<string>> SelectedItemsChanged { get; set; }
 
     [Parameter]
-    public string NoItemsPlaceholder { get; set; } = "No items";
-    
-    [Parameter]
-    public string Placeholder { get; set; } = "Select...";
+    public string NoItemsText { get; set; } = "No items found";
 
-    private string SearchText { get; set; } = string.Empty;
+    [Parameter]
+    public string Placeholder { get; set; } = "Type to search...";
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public bool FullWidth { get; set; }
+
+    [Parameter]
+    public bool AllowDuplicates { get; set; }
+
+    [Parameter]
+    public int MaxItems { get; set; } = 0;
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private ElementReference _inputElement;
+    private string _searchText = string.Empty;
     private bool _showDropdown = false;
 
-    private List<string> FilteredTags => Items
-        .Where(t => t.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
-        .Except(SelectedItems)
-        .OrderBy(t => t)
+    private List<string> FilteredItems => Items
+        .Where(item => string.IsNullOrEmpty(_searchText) || 
+                      item.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+        .Where(item => AllowDuplicates || !SelectedItems.Contains(item))
+        .OrderBy(item => item)
         .ToList();
 
-    private async Task HideDropdown()
+    private async Task FocusInput()
     {
-        await Task.Delay(200); // Даем время для обработки клика
+        if (!Disabled)
+        {
+            await _inputElement.FocusAsync();
+        }
+    }
+
+    private void ShowDropdown()
+    {
+        if (!Disabled)
+        {
+            _showDropdown = true;
+        }
+    }
+
+    private void HideDropdown()
+    {
         _showDropdown = false;
-        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "Enter" when _showDropdown && FilteredItems.Any():
+                await AddTag(FilteredItems.First());
+                break;
+                
+            case "Escape":
+                _showDropdown = false;
+                break;
+            
+            case "Backspace" when string.IsNullOrEmpty(_searchText) && SelectedItems.Any():
+                var lastTag = SelectedItems.Last();
+                await RemoveTag(lastTag);
+                break;
+        }
     }
 
     private async Task AddTag(string tag)
     {
-        Console.WriteLine($"AddTag, {tag}");
-        if (!SelectedItems.Contains(tag))
+        if (Disabled || string.IsNullOrWhiteSpace(tag)) return;
+        
+        if (MaxItems > 0 && SelectedItems.Count >= MaxItems)
         {
-            SelectedItems.Add(tag);
-            await SelectedItemsChanged.InvokeAsync(SelectedItems);
-            SearchText = string.Empty;
-            _showDropdown = true;
-            await InvokeAsync(StateHasChanged);
+            return;
         }
+
+        if (!AllowDuplicates && SelectedItems.Contains(tag))
+        {
+            return;
+        }
+
+        SelectedItems.Add(tag);
+        _searchText = string.Empty;
+        _showDropdown = true;
+        
+        await FocusInput();
+        await SelectedItemsChanged.InvokeAsync(SelectedItems);
     }
 
     private async Task RemoveTag(string tag)
     {
+        if (Disabled) return;
+        
         SelectedItems.Remove(tag);
         await SelectedItemsChanged.InvokeAsync(SelectedItems);
+        await FocusInput();
     }
 }

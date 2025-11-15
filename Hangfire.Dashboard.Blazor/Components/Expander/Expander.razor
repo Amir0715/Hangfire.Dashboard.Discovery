@@ -15,10 +15,10 @@
         get;
         set
         {
-            field = value;
-            if (IsExpandedChanged.HasDelegate)
+            if (IsExpandedChanged.HasDelegate && field != value)
             {
-                IsExpandedChanged.InvokeAsync(value);
+                field = value;
+                IsExpandedChanged.InvokeAsync(field);
             }
         }
     }

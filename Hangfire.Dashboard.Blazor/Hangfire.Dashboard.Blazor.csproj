@@ -27,13 +27,6 @@
         <Folder Include="wwwroot\lib\"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <None Remove="Components\Button\Button.razor.css" />
-      <Content Include="Components\Button\Button.razor.css" />
-      <None Remove="Components\Drawer\Drawer.razor.css" />
-      <Content Include="Components\Drawer\Drawer.razor.css" />
-    </ItemGroup>
-
 <!--    <ItemGroup>-->
 <!--        <Content Update="Components\**\*.css" CssScope="hangfire-dashboard-blazor" />-->
 <!--    </ItemGroup>-->

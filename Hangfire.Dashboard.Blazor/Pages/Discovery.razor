@@ -43,7 +43,7 @@
             Placeholder="Select job parameters..."
             Items="@_allJobParams"
             @bind-SelectedItems="@_showJobParams"
-            NoItemsPlaceholder="No available job parameters. Change query and get more job."/>
+            NoItemsText="No available job parameters. Change query and get more job."/>
 
         <Dropdown Items="@_sortDirections"
                   TItem="TimePaginationDirection"
