@@ -1,5 +1,31 @@
 :root {
     --bs-code-color: #1792ff;
+
+    /* Button */
+    --hd-button-bg: #373e47;
+    --hd-button-bg-hover: #444c56;
+    --hd-button-bg-active: #2d333b;
+    --hd-button-border: #444c56;
+    --hd-button-border-hover: #539bf5;
+    --hd-button-text: #adbac7;
+    --hd-button-radius: 4px;
+    --hd-button-padding-x: 1rem;
+    --hd-button-padding-y: 0.5rem;
+    --hd-button-height: 36px;
+    --hd-button-font-size: 14px;
+    --hd-button-transition: all 0.2s ease;
+    --hd-button-loader-size: 16px;
+
+    /* Drawer */
+    --hd-drawer-bg: #2d333b;
+    --hd-drawer-border: #444c56;
+    --hd-drawer-text: #adbac7;
+    --hd-drawer-radius: 6px;
+    --hd-drawer-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --hd-drawer-overlay-bg: rgba(0, 0, 0, 0.5);
+    --hd-drawer-transition: 0.3s ease-in-out;
+    --hd-drawer-header-spacing: 1rem;
+    --hd-drawer-scrollbar-width: 6px;
 }
 
 body {

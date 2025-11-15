@@ -1,120 +1,45 @@
-<style>
-    .panel {
-        background: #2d333b;
-        border: 1px solid #444c56;
-        border-radius: 6px;
-        padding: 0.5rem;
-    }
+<div class="drawer__overlay @(_isOpen ? "drawer__overlay--open" : "")"
+     @onclick="Close"
+     @onkeydown="HandleOverlayKeyDown"
+     tabindex="0"
+     role="button"
+     aria-label="Close drawer">
+</div>
 
-    .drawer-container {
-        position: fixed;
-        top: 20px;
-        right: 0;
-        bottom: 20px;
-        width: @Width;
-        transform: translateX(100%);
-        transition: transform 0.3s ease-in-out;
-        z-index: 100;
-    }
+<div class="drawer @GetDrawerClasses()"
+     style="@GetDrawerStyles()"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="drawer-title-@_drawerId"
+     @ref="_drawerElement">
 
-    .drawer-container.open {
-        transform: translateX(-20px);
-    }
+    <div class="drawer__body">
+        <header class="drawer__header">
+            <h3 id="drawer-title-@_drawerId" class="drawer__title">
+                @Title
+            </h3>
+            <button class="drawer__close-btn"
+                    @onclick="Close"
+                    aria-label="Close drawer"
+                    type="button">
+                <span aria-hidden="true">✕</span>
+            </button>
+        </header>
 
-    .drawer-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out;
-        pointer-events: none;
-        z-index: 99;
-    }
-
-    .drawer-overlay.open {
-        opacity: 1;
-        pointer-events: all;
-    }
-
-    .drawer-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid #444c56;
-    }
-
-    .drawer-title {
-        margin: 0;
-        font-size: 1.25rem;
-    }
-
-    .close-btn {
-        background: none;
-        border: none;
-        color: inherit;
-        cursor: pointer;
-        padding: 0.25rem;
-        border-radius: 3px;
-    }
-
-    .close-btn:hover {
-        background: #444c56;
-    }
-
-    .drawer-content {
-        height: calc(100% - 60px);
-        overflow-y: auto;
-        padding-right: 0.25rem;
-    }
-
-    /* Стили для скроллбара */
-    .drawer-content::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .drawer-content::-webkit-scrollbar-track {
-        background: #444c56;
-        border-radius: 3px;
-    }
-
-    .drawer-content::-webkit-scrollbar-thumb {
-        background: #768390;
-        border-radius: 3px;
-    }
-
-    .drawer-content::-webkit-scrollbar-thumb:hover {
-        background: #8b9bb0;
-    }
-</style>
-
-<div class="drawer-overlay @(Open ? "open" : "")" @onclick="Close"></div>
-<div class="drawer-container @(Open ? "open" : "")" style="width: @Width">
-    <div class="drawer panel" style="height: 100%;">
-        <div class="drawer-header">
-            <h3 class="drawer-title">@Title</h3>
-            <button class="close-btn" @onclick="Close">✕</button>
-        </div>
-        <div class="drawer-content">
+        <main class="drawer__content">
             @ChildContent
-        </div>
+        </main>
     </div>
 </div>
 
 @code {
+    private ElementReference _drawerElement;
+    private string _drawerId = Guid.NewGuid().ToString("N");
+    private bool _isOpen;
+    private bool _shouldAnimate;
 
     [Parameter]
-    public bool Open { get; set; }
-
-    [Parameter]
-    public EventCallback<bool> OpenChanged { get; set; }
-
-    [Parameter]
-    public RenderFragment ChildContent { get; set; }
+    public RenderFragment? ChildContent { get; set; }
 
     [Parameter]
     public string Title { get; set; } = "Drawer";
@@ -122,10 +47,114 @@
     [Parameter]
     public string Width { get; set; } = "400px";
 
+    [Parameter]
+    public DrawerPosition Position { get; set; } = DrawerPosition.Right;
+
+    [Parameter]
+    public DrawerSize Size { get; set; } = DrawerSize.Custom;
+
+    [Parameter]
+    public bool Dismissable { get; set; } = true;
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public bool IsOpen
+    {
+        get => _isOpen;
+        set
+        {
+            if (_isOpen != value)
+            {
+                _isOpen = value;
+                _shouldAnimate = true;
+                IsOpenChanged.InvokeAsync(value);
+                StateHasChanged();
+            }
+        }
+    }
+
+    [Parameter]
+    public EventCallback<bool> IsOpenChanged { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_isOpen && _shouldAnimate)
+        {
+            _shouldAnimate = false;
+
+            // Focus management for accessibility
+            await Task.Delay(50); // Small delay for animation
+
+            // In a real app, you might want to focus the first focusable element
+        }
+    }
+
+    private string GetDrawerClasses()
+    {
+        var classes = new List<string>();
+
+        if (_isOpen)
+            classes.Add("drawer--open");
+
+        classes.Add($"drawer--{Position.ToString().ToLower()}");
+
+        if (Size != DrawerSize.Custom)
+            classes.Add($"drawer--{Size.ToString().ToLower()}");
+
+        if (!string.IsNullOrEmpty(Class))
+            classes.Add(Class);
+
+        return string.Join(" ", classes);
+    }
+
+    private string GetDrawerStyles()
+    {
+        var styles = new List<string>();
+
+        if (Size == DrawerSize.Custom && !string.IsNullOrEmpty(Width))
+        {
+            var dimension = Position is DrawerPosition.Left or DrawerPosition.Right ? "width" : "height";
+            styles.Add($"{dimension}: {Width}");
+        }
+
+        return string.Join("; ", styles);
+    }
+
+    private void HandleOverlayKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape" || e.Key == "Enter" || e.Key == " ")
+        {
+            Close();
+        }
+    }
+
     private void Close()
     {
-        Open = false;
-        OpenChanged.InvokeAsync(Open);
+        if (Dismissable && IsOpen)
+        {
+            IsOpen = false;
+        }
+    }
+
+    public enum DrawerPosition
+    {
+        Right,
+        Left,
+        Top,
+        Bottom
+    }
+
+    public enum DrawerSize
+    {
+        Custom,
+        Small,
+        Medium,
+        Large,
+        Full
     }
 
 }
+
+

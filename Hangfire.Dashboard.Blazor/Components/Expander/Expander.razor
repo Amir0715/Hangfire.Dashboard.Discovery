@@ -1,0 +1,32 @@
+<button class="expander-btn" @onclick="@(() => IsExpanded = !IsExpanded)">
+    <span>@(IsExpanded ? "Collapse" : "Expand")</span>
+    <i class="bi bi-chevron-down toggle-icon @(IsExpanded ? "expanded" : "")"></i>
+</button>
+
+@if (IsExpanded)
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter]
+    public bool IsExpanded
+    {
+        get;
+        set
+        {
+            field = value;
+            if (IsExpandedChanged.HasDelegate)
+            {
+                IsExpandedChanged.InvokeAsync(value);
+            }
+        }
+    }
+
+    [Parameter]
+    public EventCallback<bool> IsExpandedChanged { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; } = null!;
+
+}

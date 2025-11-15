@@ -1,0 +1,24 @@
+.expander-btn {
+    background: #373e47;
+    border: 1px solid #444c56;
+    color: #adbac7;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;: 0.5 rem 0;
+}
+
+.expander-btn:hover {
+    background: #444c56;
+    transform: translateY(-1px);
+}
+
+.toggle-icon {
+    transition: transform 0.2s ease;
+}
+
+.toggle-icon.expanded {
+    transform: rotate(180deg);
+}

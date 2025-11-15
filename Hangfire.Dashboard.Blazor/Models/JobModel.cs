@@ -10,7 +10,7 @@ internal class JobModel
     }
 
     public JobContext JobContext { get; private set; }
-    public bool Expanded { get; set; }
+    public bool IsExpanded { get; set; }
     
     public static implicit operator JobModel(JobContext jobContext) => new(jobContext);
 }

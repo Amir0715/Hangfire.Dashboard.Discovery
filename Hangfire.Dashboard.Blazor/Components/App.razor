@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using System.Reflection
+<!DOCTYPE html>
 <html lang="ru" bit-theme-default="dark">
 <head>
     <meta charset="utf-8"/>
@@ -10,6 +11,8 @@
     <link rel="stylesheet" href="_content/Hangfire.Dashboard.Blazor/app.css"/>
     <link rel="stylesheet" href="_content/Hangfire.Dashboard.Blazor/Hangfire.Dashboard.Blazor.bundle.scp.css"/>
     <link rel="stylesheet" href="_content/Hangfire.Dashboard.Blazor/Hangfire.Dashboard.Blazor.styles.css"/>
+    @* TODO: Либо отказаться от хака, или использовать ручную сборку css в некий app.css руками как другие либы *@
+    <link rel="stylesheet" href="@(_executingAssembly).styles.css"/>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,4 +35,5 @@
 
 @code {
     private readonly IComponentRenderMode _interactiveServerNoPrerenderMode = new InteractiveServerRenderMode(prerender: false);
+    private string _executingAssembly = Assembly.GetEntryAssembly()?.GetName().Name ?? throw new InvalidOperationException();
 }
