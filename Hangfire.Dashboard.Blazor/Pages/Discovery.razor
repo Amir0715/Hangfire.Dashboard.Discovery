@@ -1,8 +1,6 @@
 @page "/_hangfireBlazorDiscovery"
 @using Hangfire.Dashboard.Blazor.Core.Abstractions
 @using Hangfire.Dashboard.Blazor.Core.Dtos
-@using Hangfire.Dashboard.Blazor.Components.TagSelector
-@using Hangfire.Dashboard.Blazor.Components.SimpleTimeRangePicker
 @using Microsoft.Extensions.Options
 
 <style>
@@ -27,18 +25,18 @@
         <QueryInput Class="flex-shrink-1 flex-grow-0" Query="@_timePaginationQuery.Data.QueryString"
                     @ref="@_queryInput"/>
         <div style="min-width: 250px;">
-            <SimpleTimeRangePicker DateTimeRange="@_dateTimeRange" DateTimeRangeChanged="DateTimeRangeChanged"/>
+            <DateTimeRangePicker DateTimeRange="@_dateTimeRange" DateTimeRangeChanged="DateTimeRangeChanged"/>
         </div>
         <Button OnClick="@SearchJobsAsync" IsLoading="@_isLoading">Run</Button>
     </div>
+    @if (!(_lastPaginationResult?.IsSuccess ?? true))
+    {
+        <div class="text-danger">
+            <i class="bi bi-x-circle-fill"></i>
+            @_lastPaginationResult?.Error
+        </div>
+    }
     <div class="d-flex toolbar justify-content-between mt-3 align-items-baseline">
-        @if (!(_lastPaginationResult?.IsSuccess ?? true))
-        {
-            <div class="text-danger">
-                <i class="bi bi-x-circle-fill"></i>
-                @_lastPaginationResult?.Error
-            </div>
-        }
         <TagSelector
             Placeholder="Select job parameters..."
             Items="@_allJobParams"

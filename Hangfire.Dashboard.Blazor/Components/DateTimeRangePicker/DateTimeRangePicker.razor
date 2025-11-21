@@ -1,63 +1,6 @@
 @using Microsoft.JSInterop
 @inject IJSRuntime JsRuntime
-
-<style>
-    .time-range-picker {
-        position: relative;
-        width: 100%;
-    }
-
-    .picker-dropdown {
-        background: #2d333b;
-        border: 1px solid #444c56;
-        border-radius: 4px;
-        padding: 1rem;
-        margin-top: 0.5rem;
-        z-index: 1000;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        min-width: 400px;
-
-        position: fixed;
-        transform: translateX(var(--pos-x, 0)) translateY(var(--pos-y, 0));
-        max-width: 95vw;
-        max-height: 80vh;
-    }
-
-    .tab-buttons {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .tab-button {
-        background: none;
-        border: none;
-        color: #adbac7;
-        padding: 0.5rem 1rem;
-        cursor: pointer;
-        border-radius: 4px;
-    }
-
-    .tab-button.active {
-        background: #373e47;
-        color: #539bf5;
-    }
-
-    .date-inputs {
-        display: grid;
-        gap: 1rem;
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .submit-section {
-        margin-top: 1rem;
-        display: flex;
-        justify-content: flex-end;
-    }
-</style>
-
 <div class="time-range-picker">
-
     <Button OnClick="@ToggleDropdown" class="w-100">
         <div>
             <span>@DateTimeRange.StartDateTime.ToLocalTime().ToString("g")</span>
@@ -100,6 +43,7 @@
         </div>
     }
 </div>
+
 <script>
     function calculatePosition(triggerElement, dropdownElement) {
         console.log(triggerElement);

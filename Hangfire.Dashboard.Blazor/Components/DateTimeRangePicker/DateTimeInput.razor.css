@@ -1,0 +1,13 @@
+.date-time-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.input-field {
+    padding: 0.5rem;
+    background: #2d333b;
+    border: 1px solid #444c56;
+    border-radius: 4px;
+    color: #adbac7;
+}
