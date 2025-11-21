@@ -23,10 +23,6 @@
         <ProjectReference Include="..\Hangfire.Dashboard.Blazor.Core\Hangfire.Dashboard.Blazor.Core.csproj"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Folder Include="wwwroot\lib\"/>
-    </ItemGroup>
-
 <!--    <ItemGroup>-->
 <!--        <Content Update="Components\**\*.css" CssScope="hangfire-dashboard-blazor" />-->
 <!--    </ItemGroup>-->

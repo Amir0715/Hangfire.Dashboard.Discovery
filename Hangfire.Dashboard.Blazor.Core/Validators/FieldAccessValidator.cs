@@ -9,6 +9,7 @@ using Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 
 namespace Hangfire.Dashboard.Blazor.Core.Validators;
 
+// TODO: Отказаться от FluentValidation
 public class FieldAccessValidator : AbstractValidator<FieldAccessToken>
 {
     private static Regex _fieldRegex;

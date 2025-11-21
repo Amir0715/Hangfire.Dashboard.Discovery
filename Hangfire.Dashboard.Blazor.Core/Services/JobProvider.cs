@@ -6,6 +6,7 @@ using FluentValidation;
 using Hangfire.Dashboard.Blazor.Core.Abstractions;
 using Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 using Hangfire.Dashboard.Blazor.Core.Dtos;
+using Microsoft.Extensions.Logging;
 
 namespace Hangfire.Dashboard.Blazor.Core.Services;
 
@@ -16,54 +17,68 @@ public class JobProvider : IJobProvider
     private readonly ITokenizer _tokenizer;
     private readonly IExpressionGenerator _expressionGenerator;
     private readonly IJobRepository _jobRepository;
+    private readonly ILogger<JobProvider> _logger;
 
     public JobProvider(
-        IValidator<IEnumerable<Token>> tokensValidator, 
+        IValidator<IEnumerable<Token>> tokensValidator,
         IValidator<FieldAccessToken> validator,
         ITokenizer tokenizer,
         IExpressionGenerator expressionGenerator,
-        IJobRepository jobRepository
-        )
+        IJobRepository jobRepository,
+        ILogger<JobProvider> logger
+    )
     {
         _tokensValidator = tokensValidator ?? throw new ArgumentNullException(nameof(tokensValidator));
         _fieldAccessValidator = validator ?? throw new ArgumentNullException(nameof(validator));
         _tokenizer = tokenizer ?? throw new ArgumentNullException(nameof(tokenizer));
         _expressionGenerator = expressionGenerator ?? throw new ArgumentNullException(nameof(expressionGenerator));
         _jobRepository = jobRepository ?? throw new ArgumentNullException(nameof(jobRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
-    
-    public async ValueTask<Result<TimePaginationResult<JobContext>>> SearchJobs(TimePaginationQuery<QueryDto> paginationQueryDto)
-    {
-        var query = paginationQueryDto.Data;
-        var tokens = _tokenizer.Tokenize(query.QueryString).ToList();
-        // ReSharper disable once MethodHasAsyncOverload
-        var validationResult = _tokensValidator.Validate(tokens);
-        if (!validationResult.IsValid)
-        {
-            return Result<TimePaginationResult<JobContext>>.Failed(validationResult.ToString());
-        }
 
-        foreach (var fieldAccessToken in tokens.OfType<FieldAccessToken>())
+    public async ValueTask<Result<TimePaginationResult<JobContext>>> SearchJobs(
+        TimePaginationQuery<QueryDto> paginationQueryDto
+    )
+    {
+        try
         {
+            var query = paginationQueryDto.Data;
+            var tokens = _tokenizer.Tokenize(query.QueryString).ToList();
+
             // ReSharper disable once MethodHasAsyncOverload
-            validationResult = _fieldAccessValidator.Validate(fieldAccessToken);
+            var validationResult = _tokensValidator.Validate(tokens);
             if (!validationResult.IsValid)
             {
                 return Result<TimePaginationResult<JobContext>>.Failed(validationResult.ToString());
             }
-        }
 
-        var expression = _expressionGenerator.GenerateExpression(tokens);
-        var paginationQuery = new TimePaginationQuery<SearchQuery>(paginationQueryDto)
-        {
-            Data = new SearchQuery()
+            foreach (var fieldAccessToken in tokens.OfType<FieldAccessToken>())
             {
-                QueryExpression = expression,
-                StartDateTimeOffset = query.StartDateTimeOffset,
-                EndDateTimeOffset = query.EndDateTimeOffset
+                // ReSharper disable once MethodHasAsyncOverload
+                validationResult = _fieldAccessValidator.Validate(fieldAccessToken);
+                if (!validationResult.IsValid)
+                {
+                    return Result<TimePaginationResult<JobContext>>.Failed(validationResult.ToString());
+                }
             }
-        };
-        var jobContexts = await _jobRepository.SearchAsync(paginationQuery);
-        return Result<TimePaginationResult<JobContext>>.Success(jobContexts);
+
+            var expression = _expressionGenerator.GenerateExpression(tokens);
+            var paginationQuery = new TimePaginationQuery<SearchQuery>(paginationQueryDto)
+            {
+                Data = new SearchQuery()
+                {
+                    QueryExpression = expression,
+                    StartDateTimeOffset = query.StartDateTimeOffset,
+                    EndDateTimeOffset = query.EndDateTimeOffset
+                }
+            };
+            var jobContexts = await _jobRepository.SearchAsync(paginationQuery);
+            return Result<TimePaginationResult<JobContext>>.Success(jobContexts);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error while searching jobs");
+            return Result<TimePaginationResult<JobContext>>.Failed("Internal Server Error");
+        }
     }
 }

@@ -1,0 +1,43 @@
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+
+<div @ref="@_markdownContainer" style="font-size: 12pt;"></div>
+
+@code {
+    private ElementReference _markdownContainer;
+    private IJSObjectReference _module;
+
+    [Parameter]
+    public string FileUrl { get; set; } = null!;
+
+    [Inject]
+    private IJSRuntime JsRuntime { get; set; } = null!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !string.IsNullOrEmpty(FileUrl))
+        {
+            try
+            {
+                // Импортируем модуль
+                _module = await JsRuntime.InvokeAsync<IJSObjectReference>(
+                    "import",
+                    "./_content/Hangfire.Dashboard.Blazor/markdownRenderer.js"
+                );
+
+                var fullPath = $"/_content/Hangfire.Dashboard.Blazor/{FileUrl}";
+                await _module.InvokeVoidAsync("renderMarkdown", _markdownContainer, fullPath);
+            }
+            catch
+            {
+                // Ignore
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _module.DisposeAsync();
+    }
+
+}

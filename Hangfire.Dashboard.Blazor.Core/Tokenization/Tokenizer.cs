@@ -6,6 +6,7 @@ using Hangfire.Dashboard.Blazor.Core.Abstractions.Tokens;
 
 namespace Hangfire.Dashboard.Blazor.Core.Tokenization;
 
+// TODO: Реализовать токенизатор через Visitor??
 public class Tokenizer : ITokenizer
 {
     public IEnumerable<Token> Tokenize(string query)

@@ -15,7 +15,7 @@
 </style>
 
 <Drawer @bind-IsOpen="@_drawerIsOpened" Title="Help" Width="700px">
-    <HelpText/>
+    <Markdown FileUrl="/docs/hql.md"/>
 </Drawer>
 
 <div class="mb-2">
@@ -86,7 +86,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _dateTimeRange.StartDateTime = DateTimeOffset.UtcNow.Add(-HangfireDiscoveryOptions.Value.StartDateTimeOffsetByNow);
+        _dateTimeRange.StartDateTime = DateTimeOffset.UtcNow.Add(HangfireDiscoveryOptions.Value.StartDateTimeOffsetByNow);
         _timePaginationQuery.Data.QueryString = HangfireDiscoveryOptions.Value.StartUpQuery;
 
         await RefreshQueryHints();
