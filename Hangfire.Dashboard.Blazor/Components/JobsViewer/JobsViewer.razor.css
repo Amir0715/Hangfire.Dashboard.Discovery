@@ -1,0 +1,8 @@
+.jobs {
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+    margin-top: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: #adbac7 #2d343c;
+    padding-right: 5px;
+}

@@ -1,0 +1,96 @@
+@using System.Text.Json
+
+<div class="job-card">
+    <div class="job-header">
+        <a class="job-id-link" href="@($"/hangfire/jobs/details/{Job.Id}")" title="Job Id">#@Job.Id</a>
+        <span class="status-badge @Job.State.ToLower()" title="Last state">@Job.State</span>
+        <div class="job-title">
+            <span title="Job Name">@Job.JobName</span>
+            <span class="queue-tag" title="Job queue">@Job.Queue</span>
+        </div>
+        <span class="job-created-at" title="Created At (Browser Time)">@Job.CreatedAt.ToOffset(_browserTimeSpan).LocalDateTime</span>
+    </div>
+
+    <!-- В карточке задачи -->
+    <div class="comments-container">
+        @if (!string.IsNullOrEmpty(Job.ExceptionMessage))
+        {
+            <div class="comment-tag exception-tag" title="Exception">
+                <span>@Job.ExceptionType:</span>
+                <span>@Job.ExceptionMessage</span>
+            </div>
+        }
+
+        @foreach (var param in GetVisibleParams(Job))
+        {
+            <div class="comment-tag" title="@param.Key">
+                <span>@param.Key:</span>
+                <span class="tag-value">@FormatJsonValue(param.Value)</span>
+            </div>
+        }
+    </div>
+    <Expander @bind-IsExpanded="@_isExpanded">
+        <div class="details-panel">
+            <h4>Arguments</h4>
+            <div class="json-preview">
+                <pre>@PrettyPrintJson(Job.Args?.RootElement)</pre>
+            </div>
+
+            <h4>Parameters</h4>
+            <div class="json-preview">
+                <pre>@PrettyPrintJson(Job.Params?.RootElement)</pre>
+            </div>
+
+            @if (Job.StateData != null)
+            {
+                <h4>State</h4>
+                <div class="json-preview">
+                    <pre>@PrettyPrintJson(Job.StateData.RootElement)</pre>
+                </div>
+            }
+        </div>
+    </Expander>
+</div>
+
+@code {
+    private TimeSpan _browserTimeSpan;
+    private bool _isExpanded = false;
+
+    [Parameter]
+    public JobContext Job { get; set; } = null!;
+
+    [Inject]
+    private BrowserTimeService BrowserTimeService { get; set; } = null!;
+    
+    [Parameter]
+    public ICollection<string> ShowJobParams { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _browserTimeSpan = await BrowserTimeService.GetBrowserOffsetAsync();
+        await base.OnInitializedAsync();
+    }
+
+    private string FormatJsonValue(JsonElement element)
+    {
+        return element.ToString();
+    }
+    
+    private IEnumerable<KeyValuePair<string, JsonElement>> GetVisibleParams(JobContext job)
+    {
+        return job.Params.RootElement.EnumerateObject()
+            .Where(p => ShowJobParams.Contains(p.Name))
+            .ToDictionary(x => x.Name, v => v.Value);
+    }
+
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    private string PrettyPrintJson(JsonElement? element)
+    {
+        return JsonSerializer.Serialize(element, SerializerOptions);
+    }
+}

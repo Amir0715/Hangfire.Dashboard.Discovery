@@ -15,6 +15,7 @@
     <ItemGroup>
         <PackageReference Include="BlazorMonaco" Version="3.3.0"/>
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0"/>
+        <PackageReference Include="Hangfire.AspNetCore" Version="1.8.0" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.13"/>
         <PackageReference Include="showdownjs" Version="2.0.3" />
     </ItemGroup>
@@ -23,7 +24,4 @@
         <ProjectReference Include="..\Hangfire.Dashboard.Blazor.Core\Hangfire.Dashboard.Blazor.Core.csproj"/>
     </ItemGroup>
 
-<!--    <ItemGroup>-->
-<!--        <Content Update="Components\**\*.css" CssScope="hangfire-dashboard-blazor" />-->
-<!--    </ItemGroup>-->
 </Project>
