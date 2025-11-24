@@ -7,6 +7,7 @@ using Hangfire.PostgreSql.Factories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 namespace Hangfire.Dashboard.Blazor.Postgresql;
@@ -54,6 +55,7 @@ public static class DependencyInjection
 
             var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString).EnableDynamicJson();
             builder.UseNpgsql(dataSourceBuilder.Build())
+                .UseLoggerFactory(NullLoggerFactory.Instance)
 #if DEBUG
                 .EnableDetailedErrors()
                 .EnableSensitiveDataLogging()

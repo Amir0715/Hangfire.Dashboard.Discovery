@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentValidation;
@@ -42,6 +43,7 @@ public class JobProvider : IJobProvider
     {
         try
         {
+            Debug.WriteLine($"Searching jobs with query: {paginationQueryDto.Data.QueryString}", nameof(JobProvider));
             var query = paginationQueryDto.Data;
             var tokens = _tokenizer.Tokenize(query.QueryString).ToList();
 
@@ -63,6 +65,7 @@ public class JobProvider : IJobProvider
             }
 
             var expression = _expressionGenerator.GenerateExpression(tokens);
+            Debug.WriteLine($"Generated expression", nameof(JobProvider));
             var paginationQuery = new TimePaginationQuery<SearchQuery>(paginationQueryDto)
             {
                 Data = new SearchQuery()
@@ -73,6 +76,8 @@ public class JobProvider : IJobProvider
                 }
             };
             var jobContexts = await _jobRepository.SearchAsync(paginationQuery);
+            
+            Debug.WriteLine($"Provided jobs count: {jobContexts.Data.Count()}", nameof(JobProvider));
             return Result<TimePaginationResult<JobContext>>.Success(jobContexts);
         }
         catch (Exception e)

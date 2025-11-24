@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Hangfire.Dashboard.Blazor.Core.Abstractions;
@@ -21,6 +22,7 @@ public class HintProvider : IHintProvider
     {
         var hints = await _jobRepository.GetHintsAsync(intervalQuery, cancellationToken);
         _logger.LogDebug("For query {@query} loaded hints {@hints}", intervalQuery, hints);
+        Debug.WriteLine($"Provided hints", nameof(HintProvider));
 
         return hints;
     }
