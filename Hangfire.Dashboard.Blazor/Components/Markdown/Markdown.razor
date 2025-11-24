@@ -5,7 +5,7 @@
 
 @code {
     private ElementReference _markdownContainer;
-    private IJSObjectReference _module;
+    private IJSObjectReference? _module;
 
     [Parameter]
     public string FileUrl { get; set; } = null!;
@@ -37,7 +37,10 @@
 
     public async ValueTask DisposeAsync()
     {
-        await _module.DisposeAsync();
+        if (_module is not null)
+        {
+            await _module.DisposeAsync();
+        }
     }
 
 }

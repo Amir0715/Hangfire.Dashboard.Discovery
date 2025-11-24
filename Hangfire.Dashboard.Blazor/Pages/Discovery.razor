@@ -101,12 +101,12 @@
         if (_lastPaginationResult.IsSuccess)
         {
             _jobs = _lastPaginationResult.Value?.Data ?? [];
+            _allJobParams = _jobs
+                .SelectMany(j => j.Params.RootElement.EnumerateObject().Select(p => p.Name))
+                .Distinct()
+                .ToHashSet();
         }
-
-        _allJobParams = _jobs
-            .SelectMany(j => j.Params.RootElement.EnumerateObject().Select(p => p.Name))
-            .Distinct()
-            .ToHashSet();
+        
         _isLoading = false;
     }
 

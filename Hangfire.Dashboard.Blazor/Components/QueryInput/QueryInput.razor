@@ -379,7 +379,7 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (_monacoEditor != null)
+        if (_monacoEditor is not null)
         {
             await _monacoEditor.DisposeAsync();
         }

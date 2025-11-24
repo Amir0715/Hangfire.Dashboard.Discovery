@@ -1,12 +1,13 @@
+@using System.Diagnostics
 @using Microsoft.JSInterop
 @implements IDisposable
 
 <div class="jobs">
-    @foreach (var job in Items)
+    @foreach (var job in _items)
     {
         <JobCard Job="@job" ShowJobParams="@ShowJobParams" />
     }
-    @if (_isLoadingMore)
+    @if (_isLoading)
     {
         <div class="loading-indicator">
             Loading...
@@ -37,6 +38,7 @@
 </script>
 
 @code {
+    private List<JobContext> _items = new(capacity: 50);
 
     [Parameter]
     public IEnumerable<JobContext> Items { get; set; }
@@ -50,13 +52,18 @@
     [Inject]
     public IJSRuntime JsRuntime { get; set; } = null!;
 
-    [Inject]
-    public BrowserTimeService BrowserTimeService { get; set; } = null!;
-
     private ElementReference _intersectionObserverTargetElement;
-    private bool _isLoadingMore;
+    
+    /// <summary>
+    /// Состоние загрузки
+    /// </summary>
+    private bool _isLoading;
+    
+    /// <summary>
+    /// Больше элементов нет, прекращаем вызов LoadMoreItems
+    /// </summary>
     private bool _notMoreItems;
-    private TimeSpan _browserTimeSpan;
+    
     private DotNetObjectReference<JobsViewer>? _dotNetObjectReference;
 
     protected override async Task OnParametersSetAsync()
@@ -71,7 +78,8 @@
             Items = [];
         }
 
-        await base.OnParametersSetAsync();
+        _items = Items?.ToList() ?? [];
+        _notMoreItems = false;
         StateHasChanged();
     }
 
@@ -82,21 +90,25 @@
             _dotNetObjectReference = DotNetObjectReference.Create(this);
             await JsRuntime.InvokeVoidAsync("registerScrollHandler", _intersectionObserverTargetElement, _dotNetObjectReference);
         }
-
-        await base.OnAfterRenderAsync(firstRender);
     }
 
     [JSInvokable]
     public async Task CallLoadMoreItems()
     {
-        if (LoadMoreItems == null || _notMoreItems || _isLoadingMore) return;
+        Debug.WriteLine($"_notMoreItems: {_notMoreItems}, _isLoading: {_isLoading}", nameof(CallLoadMoreItems));
+        if (LoadMoreItems == null || _notMoreItems || _isLoading)
+        {
+            return;
+        }
 
-        _isLoadingMore = true;
-        StateHasChanged();
+        _isLoading = true;
+        await InvokeAsync(StateHasChanged);
 
         try
         {
-            var moreItems = await LoadMoreItems.Invoke();
+            var moreItems = (await LoadMoreItems.Invoke()).ToList();
+            _items.AddRange(moreItems);
+            Debug.WriteLine($"LoadMoreItems return {moreItems.Count} items, _items.Count: {_items.Count}", nameof(CallLoadMoreItems));
             if (!moreItems.Any())
             {
                 _notMoreItems = true;
@@ -104,8 +116,8 @@
         }
         finally
         {
-            _isLoadingMore = false;
-            StateHasChanged();
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
