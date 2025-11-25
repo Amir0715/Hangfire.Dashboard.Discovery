@@ -16,14 +16,18 @@
     <Markdown FileUrl="/docs/hql.md"/>
 </Drawer>
 
+<Drawer @bind-IsOpen="@_savedQueryDrawerIsOpen" Title="Saved queries" Width="800px">
+    <SavedQueries CurrentQuery="@_timePaginationQuery.Data.QueryString" LoadSavedQueryClicked="@PasteSavedQuery"/>
+</Drawer>
+
 <div class="mb-2">
     <div class="d-flex gap-1 toolbar">
         <Button OnClick="@(() => _drawerIsOpened = true)">
             <i class="bi bi-info"></i>
         </Button>
 
-        <QueryInput Class="flex-shrink-1 flex-grow-0" Query="@_timePaginationQuery.Data.QueryString"
-                    @ref="@_queryInput"/>
+        <QueryInput Class="flex-shrink-1 flex-grow-0" @ref="@_queryInput"/>
+        <Button OnClick="@OpenSavedQueryDrawer"><i class="bi bi-bookmarks-fill"></i></Button>
         <div style="min-width: 250px;">
             <DateTimeRangePicker DateTimeRange="@_dateTimeRange" DateTimeRangeChanged="DateTimeRangeChanged"/>
         </div>
@@ -81,14 +85,25 @@
     private ICollection<string> _showJobParams = [];
     private bool _drawerIsOpened;
     private QueryInput _queryInput = null!;
+    private bool _savedQueryDrawerIsOpen;
 
     protected override async Task OnInitializedAsync()
     {
         _dateTimeRange.StartDateTime = DateTimeOffset.UtcNow.Add(HangfireDiscoveryOptions.Value.StartDateTimeOffsetByNow);
         _timePaginationQuery.Data.QueryString = HangfireDiscoveryOptions.Value.StartUpQuery;
-
+        
         await RefreshQueryHints();
         await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _queryInput.SetQueryValue(HangfireDiscoveryOptions.Value.StartUpQuery);
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     private async Task SearchJobsAsync()
@@ -153,5 +168,16 @@
         });
 
         await _queryInput.SetValueHintAsync(hints);
+    }
+
+    private Task OpenSavedQueryDrawer()
+    {
+        _savedQueryDrawerIsOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task PasteSavedQuery(SavedQuery savedQuery)
+    {
+        await _queryInput.SetQueryValue(savedQuery.Query);
     }
 }

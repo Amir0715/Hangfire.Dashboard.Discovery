@@ -56,22 +56,6 @@
     color: rgb(var(--state-color));
 }
 
-.json-preview {
-    background: #1e2228;
-    border: 1px solid #444c56;
-    border-radius: 6px;
-    padding: 0.5rem;
-    margin: 0.5rem 0;
-    max-height: 300px;
-    overflow: auto;
-    position: relative;
-}
-
-.json-preview pre {
-    margin: 0;
-    text-wrap: auto;
-}
-
 .json-toggle {
     position: absolute;
     bottom: 0;

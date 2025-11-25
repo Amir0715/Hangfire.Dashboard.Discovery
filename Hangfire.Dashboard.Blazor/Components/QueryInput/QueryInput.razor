@@ -132,12 +132,12 @@
                 const logicalOperatorMatch = textUntilPosition.match(/(&&|\|\|)\s*$/);
                 const startOfLine = textUntilPosition.trim() === '';
                 const afterFieldValue = textUntilPosition.match(/"[^"]*"\s*$/);
-                console.debug("fieldMatch ", fieldMatch);
-                console.debug("operatorMatch ", operatorMatch);
-                console.debug("logicalOperatorMatch ", logicalOperatorMatch);
-                console.debug("startOfLine ", startOfLine);
-                console.debug("afterFieldValue ", afterFieldValue);
-                console.debug("=============");
+                // console.debug("fieldMatch ", fieldMatch);
+                // console.debug("operatorMatch ", operatorMatch);
+                // console.debug("logicalOperatorMatch ", logicalOperatorMatch);
+                // console.debug("startOfLine ", startOfLine);
+                // console.debug("afterFieldValue ", afterFieldValue);
+                // console.debug("=============");
                 
                 if (fieldMatch) {
                     // Контекст значения после оператора
@@ -253,7 +253,7 @@
 
         const editor = monaco.editor.create(document.getElementById('container'), {
             automaticLayout: true,
-            value: `State == "Enqueued"`,
+            value: ``,
             language: 'hql',
             theme: 'vs-dark',
             // Настройки для автоматического показа подсказок
@@ -285,16 +285,6 @@
             overviewRulerLanes: 0,
             renderLineHighlight: 'none',
         });
-
-        /*
-        // Дополнительно: принудительно показывать подсказки при определенных событиях
-        editor.onDidChangeCursorPosition(() => {
-            // Небольшая задержка для стабильности
-            setTimeout(() => {
-                editor.trigger('', 'editor.action.triggerSuggest', {});
-            }, 100);
-        });
-        */
 
         // suppress enter key press
 
@@ -340,9 +330,6 @@
     [Parameter]
     public string Class { get; set; } = null!;
 
-    [Parameter]
-    public string Query { get; set; } = null!;
-
     [Inject]
     private IJSRuntime JsRuntime { get; set; } = null!;
 
@@ -358,6 +345,16 @@
         
         var query = await _monacoEditor.InvokeAsync<string>("getValue");
         return query;
+    }
+
+    public async Task SetQueryValue(string? query)
+    {
+        query ??= string.Empty;
+        
+        if (_monacoEditor == null)
+            return;
+
+        await _monacoEditor.InvokeVoidAsync("setValue", query);
     }
     
     protected override async Task OnAfterRenderAsync(bool firstRender)

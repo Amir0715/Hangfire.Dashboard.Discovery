@@ -1,0 +1,14 @@
+.code {
+    background: #1e2228;
+    border: 1px solid #444c56;
+    border-radius: 6px;
+    padding: 0.5rem;
+    max-height: 300px;
+    overflow: auto;
+    position: relative;
+}
+
+::deep .code pre {
+    margin: 0;
+    text-wrap: auto;
+}

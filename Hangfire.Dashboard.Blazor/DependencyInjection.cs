@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IJobProvider, JobProvider>();
         services.AddScoped<IHintProvider, HintProvider>();
         services.AddScoped<IExpressionGenerator, ExpressionGenerator>();
+        services.AddScoped<ISavedQueryManager, SavedQueryManager>();
         
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<BrowserTimeService>();

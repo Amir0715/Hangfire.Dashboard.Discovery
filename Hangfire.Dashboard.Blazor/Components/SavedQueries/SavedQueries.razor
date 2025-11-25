@@ -1,0 +1,86 @@
+@using Hangfire.Dashboard.Blazor.Core.Abstractions
+@using Hangfire.Dashboard.Blazor.Core.Dtos
+<div>
+    <div class="d-flex gap-2">
+        <TextInput Placeholder="Type query name" @bind-Value="@_queryName"/>
+        <Button OnClick="@SaveCurrentQueryAsync">Save current query</Button>
+    </div>
+    <span class="text-danger">@_errorMessage</span>
+
+    <hr />
+    <div>
+        @foreach (var savedQuery in _savedQueries)
+        {
+            <div class="d-flex justify-content-between gap-3 mb-3 align-items-start">
+                <div class="d-flex flex-column gap-2">
+                    <span class="fs-5">@savedQuery.Name</span>
+                    <span>@savedQuery.CreatedAt.ToOffset(_browserOffset).LocalDateTime</span>
+                </div>
+                <Code Class="flex-grow-1"><code>@savedQuery.Query</code></Code>
+                <div class="d-flex gap-1">
+                    <Button OnClick="@(() => LoadSavedQueryClicked.InvokeAsync(savedQuery))">Load</Button>
+                    <Button OnClick="@(() => RemoveQueryAsync(savedQuery))">Delete</Button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private IEnumerable<SavedQuery> _savedQueries = [];
+    private TimeSpan _browserOffset;
+    private string? _queryName = null!;
+    private string? _errorMessage = null!;
+
+    [Inject]
+    private ISavedQueryManager SavedQueryManager { get; set; } = null!;
+
+    [Inject]
+    private BrowserTimeService BrowserTimeService { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<SavedQuery> LoadSavedQueryClicked { get; set; }
+
+    [Parameter]
+    public string CurrentQuery { get; set; } = null!;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _browserOffset = await BrowserTimeService.GetBrowserOffsetAsync();
+        _savedQueries = await SavedQueryManager.GetSavedQueriesAsync();
+    }
+
+    private async Task SaveCurrentQueryAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_queryName))
+        {
+            _errorMessage = "Enter name for query";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(CurrentQuery))
+        {
+            _errorMessage = "Enter query before save";
+            return;
+        }
+
+        var saveQueryResult = await SavedQueryManager.SaveQueryAsync(_queryName, CurrentQuery);
+        if (!saveQueryResult.IsSuccess)
+        {
+            _errorMessage = saveQueryResult.Error;
+            return;
+        }
+
+        _savedQueries = await SavedQueryManager.GetSavedQueriesAsync();
+    }
+
+    private async Task RemoveQueryAsync(SavedQuery savedQuery)
+    {
+        var result = await SavedQueryManager.RemoveQueryAsync(savedQuery);
+        if (!result.IsSuccess)
+        {
+            _errorMessage = result.Error;
+        }
+    }
+}

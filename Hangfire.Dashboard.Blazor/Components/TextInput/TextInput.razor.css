@@ -1,0 +1,30 @@
+.text-input {
+    flex: 1;
+    min-width: 80px;
+    background: transparent;
+    color: var(--hd-tag-selector-text);
+    font-family: inherit;
+    font-size: inherit;
+    outline: none;
+
+    background: var(--hd-tag-selector-bg);
+    border: 1px solid var(--hd-tag-selector-border);
+    border-radius: var(--hd-tag-selector-radius);
+    padding: 0.25rem 0.5rem;
+    min-height: 2.5rem;
+}
+
+.text-input::placeholder {
+    color: var(--hd-tag-selector-text);
+    opacity: 0.6;
+}
+
+.text-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.text-input:focus-within {
+    border-color: var(--hd-tag-selector-accent);
+    box-shadow: 0 0 0 2px rgba(83, 155, 245, 0.2);
+}
