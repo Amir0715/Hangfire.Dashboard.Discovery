@@ -55,7 +55,7 @@ public class PostgresJobRepository : IJobRepository
                             (SELECT substring(s.key FROM '\d+')::bigint AS jobId,
                                     s.value::JSONB
                              FROM {schema}."set" AS s
-                             WHERE s."key" like '{Constants.DiscoverySetKeyPrefix}:%') AS ds ON jobId = j.id
+                             WHERE s."key" like '{Constants.DiscoverySetArgKeyPrefix}:%') AS ds ON jobId = j.id
                           """;
     }
 
@@ -127,7 +127,7 @@ public class PostgresJobRepository : IJobRepository
                    (SELECT substring(s.key FROM '\d+')::bigint AS jobId,
                            s.value::JSONB
                     FROM {schema}."set" AS s
-                    WHERE s."key" like '{Constants.DiscoverySetKeyPrefix}:%') AS ds ON jobId = j.id)
+                    WHERE s."key" like '{Constants.DiscoverySetArgKeyPrefix}:%') AS ds ON jobId = j.id)
                  select distinct on ("Type", "Method", "State") * from DiscoveryJobs
                  """)
             .WhereIf(query.EndDateTimeOffset.HasValue,

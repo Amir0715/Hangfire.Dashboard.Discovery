@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Hangfire.Dashboard.Blazor.Core.Abstractions;
 using Hangfire.Dashboard.Blazor.Core.Dtos;
@@ -9,60 +10,89 @@ namespace Hangfire.Dashboard.Blazor.Core.Services;
 
 public class SavedQueryManager : ISavedQueryManager
 {
-    private static List<SavedQuery> _savedQueries = new()
+    private readonly JobStorage _storage;
+    public SavedQueryManager(JobStorage storage)
     {
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "Failed Jobs",
-            Query = "State == \"Failed\"",
-            CreatedAt = DateTimeOffset.UtcNow,
-        },
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "Succeed Jobs",
-            Query = "State == \"Succeed\"",
-            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
-        }
-    };
-
-    public Task<IEnumerable<SavedQuery>> GetSavedQueriesAsync()
-    {
-        return Task.FromResult(_savedQueries.AsEnumerable());
+        _storage = storage;
     }
 
-    public Task<Result<SavedQuery>> SaveQueryAsync(string name, string query)
+    public async Task<IEnumerable<SavedQuery>> GetSavedQueriesAsync()
+    {
+        var savedQueries = await GetSavedQueriesFromStorageAsync();
+        return savedQueries;
+    }
+
+    public async Task<Result<SavedQuery>> SaveQueryAsync(string name, string query)
     {
         var savedQuery = new SavedQuery { Id = Guid.NewGuid(), Name = name, Query = query, CreatedAt = DateTimeOffset.UtcNow };
-        _savedQueries.Add(savedQuery);
-        return Task.FromResult(Result<SavedQuery>.Success(savedQuery));
+        var savedQueries = await GetSavedQueriesFromStorageAsync();
+        
+        savedQueries.Add(savedQuery); 
+        
+        await SaveQueriesToStorageAsync(savedQueries);
+        
+        return Result<SavedQuery>.Success(savedQuery);
     }
 
-    public Task<Result<SavedQuery>> UpdateQueryAsync(SavedQuery query)
+    public async Task<Result<SavedQuery>> UpdateQueryAsync(SavedQuery query)
     {
-        var findedQuery = _savedQueries.FirstOrDefault(x => x.Id == query.Id);
+        var savedQueries = await GetSavedQueriesFromStorageAsync();
+        var findedQuery = savedQueries.FirstOrDefault(x => x.Id == query.Id);
         if (findedQuery == null)
         {
-            return Task.FromResult(Result<SavedQuery>.Failed($"Query with id {query.Id} not found"));
+            return Result<SavedQuery>.Failed($"Query with id {query.Id} not found");
         }
         
         findedQuery.Name = query.Name;
         findedQuery.Query = query.Query;
         
-        return Task.FromResult(Result<SavedQuery>.Success(findedQuery));
+        await SaveQueriesToStorageAsync(savedQueries);
+        
+        return Result<SavedQuery>.Success(findedQuery);
     }
 
-    public Task<Result> RemoveQueryAsync(SavedQuery query)
+    public async Task<Result> RemoveQueryAsync(SavedQuery query)
     {
-        var findedQuery = _savedQueries.FirstOrDefault(x => x.Id == query.Id);
+        var savedQueries = await GetSavedQueriesFromStorageAsync();
+        var findedQuery = savedQueries.FirstOrDefault(x => x.Id == query.Id);
         if (findedQuery == null)
         {
-            return Task.FromResult(Result.Failed($"Query with id {query.Id} not found"));
+            return Result.Failed($"Query with id {query.Id} not found");
         }
         
-        _savedQueries.Remove(findedQuery);
+        await SaveQueriesToStorageAsync(savedQueries);
         
-        return Task.FromResult(Result.Success());
+        return Result.Success();
+    }
+
+    private Task<List<SavedQuery>> GetSavedQueriesFromStorageAsync()
+    {
+        using var readOnlyConnection = _storage.GetReadOnlyConnection();
+        var set = readOnlyConnection.GetAllItemsFromSet(Constants.DiscoverySetSavedQueriesPrefix);
+        var queriesString = set.FirstOrDefault();
+        if (queriesString != null)
+        {
+            try
+            {
+                var queries = JsonSerializer.Deserialize<List<SavedQuery>>(queriesString);
+                return Task.FromResult(queries);
+            }
+            catch (Exception e)
+            {
+                return Task.FromResult(new List<SavedQuery>());
+            }
+        }
+        
+        return Task.FromResult(new List<SavedQuery>());
+    }
+
+    private Task SaveQueriesToStorageAsync(List<SavedQuery> queries)
+    {
+        using var connection = _storage.GetConnection();
+        using var writeOnlyTransaction = connection.CreateWriteTransaction();
+        writeOnlyTransaction.AddToSet(Constants.DiscoverySetSavedQueriesPrefix, JsonSerializer.Serialize(queries));
+        writeOnlyTransaction.Commit();
+        
+        return Task.CompletedTask;
     }
 }
